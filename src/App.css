@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .text-darker {
+        color: var(--color-base-content);
+        opacity: 0.5;
+    }
+}
