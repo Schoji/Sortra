@@ -1,35 +1,38 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowRight, FileText, FolderOpen, Plus, Search, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, FileIcon, FileText, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
+import { useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import FileSquare from "./components/fileSquare";
 import ExtensionSquare from "./components/extensionSquare";
 import Summary from "./components/summary";
-
-type file = {
-  filename: string;
-};
-
-type extension = {
-  extension: string;
-};
-
-type group = {
-  groupName: string,
-  content: file | extension | null;
-};
+import GroupSquare from "./components/groupSquare";
+import { DndContext, DragEndEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
+import { Group } from "./models/groupModel";
+import { Groups } from "./models/groupsModel";
+import { Extensions } from "./models/extensionsModel";
+import { Extension } from "./models/extensionModel";
+import { Files } from "./models/filesModel";
+import { File } from "./models/fileModel";
 
 export default function App() {
-  // Import the invoke function from Tauri
+  const groupList = useRef(new Groups);
+  const extensionList = useRef(new Extensions);
+  const fileList = useRef(new Files);
+
   const [directory, setDirectory] = useState("");
-  const [files, setFiles] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [startFiles, setStartFiles] = useState<string[]>([]);
-  const [extensions, setExtensions] = useState<Array<extensionStruct>>();
-  const [groups, setGroups] = useState<group[]>([]);
+  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [groupInputText, setGroupInputText] = useState("");
   const [invidualFilesSearchFieldVisibility, setInvidualFilesSearchFieldVisibility] = useState(false);
   const [invidualFilesSearchText, setInvidualFilesSearchText] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
+  const { setNodeRef } = useDroppable({
+    id: "0"
+  });
 
   interface SearchEvent extends React.ChangeEvent<HTMLInputElement> { }
 
@@ -43,55 +46,70 @@ export default function App() {
 
   function addNewGroup() {
     const newGroupName = groupInputText;
-    let isValid = true;
-    if (newGroupName.length > 15 || newGroupName.length == 0) return;
-    groups.forEach(singleGroup => {
-      if (singleGroup.groupName == newGroupName) isValid = false;
-    });
-    if (!isValid) return;
 
-    const new_group: group = {
-      groupName: groupInputText,
-      content: null
-    };
+    // Sprawdź czy nazwa grupy nie jest za długa
+    if (newGroupName.length > 15 || newGroupName.length == 0) return;
+
+    // Sprawdź czy nie ma grupy o takiej samej nazwie
+    if (groupList.current.groupExistsByName(newGroupName)) return;
+
+    // Stwórz nową grupę i dodaj ją do listy grup
+    const newGroup = new Group(
+      groupList.current.getLastID() + 1,
+      newGroupName,
+      null,
+      null
+    );
+    groupList.current.addGroup(newGroup);
+    setGroups(groupList.current.getGroupList());
+
+    // Wyczyść input
     setGroupInputText("");
-    setGroups(prevGroups => [...prevGroups, new_group]);
   }
 
-  function deleteGroup(index: number) {
-    setGroups(groups.filter(group => groups.indexOf(group) != index));
+  function deleteGroup(id: number) {
+    // Usuń grupe o danym ID i zaktualizuj grupy
+    groupList.current.deleteGroupByID(id);
+    setGroups(groupList.current.getGroupList());
   }
 
   // Function to call the Rust "ls" command
   async function callLs(directory: string) {
     try {
-      const result = await invoke<string[]>('ls', { dir: directory });
-      setFiles(result);
-      setStartFiles(result);
-      unpackExtensions(result);
-      console.log('ls result:', result);
+      const filesResult = await invoke<string[]>('ls', { dir: directory });
+
+      filesResult.forEach(file => {
+        const lastID = fileList.current.getLastID();
+        const newFile = new File(lastID + 1, file, 5100);
+        fileList.current.addFile(newFile);
+      });
+
+      setFiles(fileList.current.getFileList());
+      setStartFiles(filesResult);
+      unpackExtensions(filesResult);
     } catch (error) {
       console.error('Error calling ls:', error);
     }
   }
 
-  type extensionStruct = {
-    extension: string,
-    count: number;
-  };
   function unpackExtensions(files: Array<String>) {
-    let extensions: Array<extensionStruct> = [];
     files.forEach((file) => {
       const pieces = file.split(".");
-      const extension = pieces[pieces.length - 1];
-      if (!extensions.some(ext => ext.extension === extension)) {
-        extensions.push({ extension, count: 1 });
+      const extensionName = pieces[pieces.length - 1];
+      const lastID = extensionList.current.getLastID();
+
+      const newExtension = new Extension(lastID + 1, extensionName, 1);
+
+      // Jezeli nie istnieje jeszcze takie extension, to dodaj je do listy, jak tak - zwieksz liczebność jego pliku
+      if (!extensionList.current.extensionExistsByName(extensionName)) {
+        extensionList.current.addExtension(newExtension);
       } else {
-        const extObj = extensions.find(ext => ext.extension === extension);
-        if (extObj) extObj.count += 1;
+        const existingExtension = extensionList.current.getExtensionByName(extensionName);
+        if (existingExtension) existingExtension.count += 1;
       }
     });
-    setExtensions(extensions);
+    // Zaktualizuj liste extension
+    setExtensions(extensionList.current.getExtensionList());
   }
 
   async function getDirectory() {
@@ -103,9 +121,63 @@ export default function App() {
     if (!directory) return;
     setDirectory(directory ?? "brak");
     callLs(directory);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setIsDragging(false);
+    const { active, over } = event;
+
+    if (!over || !active) return;
+    const groupID = over.id as number;
+    const itemName = active.id as string;
+    const prefix = itemName.split("-")[0];
+    if (prefix == "extension") {
+      // extension
+      const currentGroup = groupList.current.getGroupByID(groupID);
+      if (!currentGroup) return;
+
+      const extensionID = Number(itemName.replace(`${prefix}-`, ""));
+      const extensionToAdd = extensionList.current.getExtensionByID(extensionID);
+
+      // Jezeli grupa nie ma zadnych extension to zrób nową listę extension
+      if (!currentGroup.extensions) {
+        currentGroup.extensions = new Extensions();
+      }
+      if (extensionToAdd && !currentGroup.extensions.extensionExistsByName(extensionToAdd.name)) {
+        currentGroup.extensions.addExtension(extensionToAdd);
+      }
+      setGroups(groupList.current.getGroupList());
+    }
+    else if (prefix == "file") {
+      // file
+      const currentGroup = groupList.current.getGroupByID(groupID);
+      if (!currentGroup) return;
+
+      // Znajdź sobie ID pliku
+      const fileID = Number(itemName.replace(`${prefix}-`, ""));
+      const fileToAdd = fileList.current.getFileByID(fileID);
+
+      if (!currentGroup.files) {
+        currentGroup.files = new Files();
+      }
+      if (fileToAdd && !currentGroup.files.FileExistsByName(fileToAdd.name)) {
+        currentGroup.files.addFile(fileToAdd);
+      }
+      console.log(fileToAdd);
+      console.log(currentGroup);
+      setGroups(groupList.current.getGroupList());
+    }
+
+
+
+    else {
+      throw ("error");
+    }
+
 
 
   }
+
   if (files.length == 0) {
     return <div className="w-full h-screen flex items-center justify-center">
       <button className="btn btn-primary" onClick={getDirectory}>
@@ -136,83 +208,112 @@ export default function App() {
       </div>
       <div className="h-16"></div>
       {/* main */}
-      <div className="p-5 grid grid-cols-1 md:grid-cols-7 gap-5 text-center justify-center">
-        {/* Invidual Files */}
-        <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96">
-          <div className="flex justify-between items-center">
-            <p className="font-semibold text-darker p-2 text-left">Individual Files</p>
-            <button
-              onClick={() => setInvidualFilesSearchFieldVisibility(!invidualFilesSearchFieldVisibility)}
-              className="btn btn-ghost btn-xs btn-primary">
-              <Search className="text-darker" size={16} />
-            </button>
-          </div>
-          {invidualFilesSearchFieldVisibility &&
-            <label
-              className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
-            >
-              <Search size={16} className="text-darker" />
-              <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
-            </label>
-
-
-          }
-
-          <div className="grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden">
-            {files && files.map((file) => (
-              <FileSquare fileIcon={FileText} fileName={file} key={file} fileSize={5234} />
-            ))}
-          </div>
-        </div>
-        {/* File Extensions */}
-        <div className="col-span-1 md:col-span-5 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96">
-          <h1 className="text-2xl font-semibold">File extensions</h1>
-          <p className="text-darker">Drag extensions to groups to sort files automatically</p>
-          <div className="grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-5 w-full overflow-scroll overflow-x-hidden">
-            {extensions && extensions.map((extension) =>
-              <ExtensionSquare extensionName={extension.extension} extensionCount={extension.count} />
-            )}
-          </div>
-        </div>
-        {/* Summary */}
-        <div className="col-span-1 md:col-span-2">
-          <Summary filesLength={files.length} extensionsLength={extensions!.length} groupsLength={groups.length} />
-        </div>
-        {/* Groups */}
-        <div className="col-span-1 md:col-span-5">
-          <div className="flex justify-between">
-            <h1 className="text-xl font-semibold">Groups</h1>
-            <div className="flex gap-2">
-              <input className="input" placeholder="Group name" value={groupInputText} onChange={(e) => setGroupInputText(e.target.value)}></input>
-              <button className="btn btn-primary" onClick={addNewGroup}>+</button>
-
+      <DndContext
+        onDragStart={(e) => {
+          setIsDragging(true);
+          setActiveId(e.active.id as string);
+        }}
+        onDragEnd={(e) => {
+          setIsDragging(false);
+          setActiveId(null);
+          handleDragEnd(e);
+        }}
+      >
+        <div className="p-5 grid grid-cols-1 md:grid-cols-7 gap-5 text-center justify-center">
+          {/* Invidual Files */}
+          <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96">
+            <div className="flex justify-between items-center">
+              <p className="font-semibold text-darker p-2 text-left">Individual Files</p>
+              <button
+                onClick={() => setInvidualFilesSearchFieldVisibility(!invidualFilesSearchFieldVisibility)}
+                className="btn btn-ghost btn-xs btn-primary">
+                <Search className="text-darker" size={16} />
+              </button>
+            </div>
+            {invidualFilesSearchFieldVisibility &&
+              <label
+                className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
+              >
+                <Search size={16} className="text-darker" />
+                <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
+              </label>
+            }
+            <div className={`grid grid-cols-1 gap-2 ${isDragging ? "overflow-hidden" : "overflow-y-scroll"} overflow-x-hidden`}>
+              {files && files.map((file) => (
+                <FileSquare id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} />
+              ))}
             </div>
           </div>
-          <div className="pt-5 grid grid-cols-2 gap-5">
-            {groups.length > 0 ? groups.map((group, index) =>
-              <div className="border-2 border-base-100-50 border-dotted p-5">
-                <div className="flex justify-between items-center">
-                  <p className="text-left">{group.groupName}</p>
-                  <button onClick={() => deleteGroup(index)} className="btn btn-ghost btn-error">
-                    <Trash2 size={16} className="text-darker" />
-                  </button>
-                </div>
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <div className="border-2 border-base-100-50 rounded-full p-1 flex items-center justify-center">
-                    <Plus className="text-success" />
+          {/* File Extensions */}
+          <div className="col-span-1 md:col-span-5 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96">
+            <h1 className="text-2xl font-semibold">File extensions</h1>
+            <p className="text-darker">Drag extensions to groups to sort files automatically</p>
+            <div className={`grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
+              {extensions && extensions.map((extension) =>
+                <ExtensionSquare id={extension.id} extensionName={extension.name} extensionCount={extension.count} />
+              )}
+            </div>
+          </div>
+          {/* Summary */}
+          <div className="col-span-1 md:col-span-2">
+            <Summary filesLength={files.length} extensionsLength={extensions!.length} groupsLength={groups.length} />
+          </div>
+          {/* Groups */}
+          <div className="col-span-1 md:col-span-5">
+            <div className="flex justify-between">
+              <h1 className="text-xl font-semibold">Groups</h1>
+              <div className="flex gap-2">
+                <input className="input" placeholder="Group name" value={groupInputText} onChange={(e) => setGroupInputText(e.target.value)}></input>
+                <button className="btn btn-primary" onClick={addNewGroup}>+</button>
+
+              </div>
+            </div>
+            <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5">
+              {groups.length > 0 ? groups.map(group =>
+                <GroupSquare key={group.id} id={group.id} groupName={group.name} onDelete={() => deleteGroup(group.id)} extensions={group.extensions ?? new Extensions()} files={group.files ?? new Files()} />)
+                :
+                // No groups
+                <div className="col-span-2 border-2 border-base-100-50 border-dotted p-5">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="border-2 border-base-100-50 rounded-full p-2 flex items-center justify-center">
+                      <Folder className="text-success" />
+                    </div>
+                    <span className="text-center text-sm font-semibold">No groups yet</span>
+                    <span className="text-darker text-xs w-1/2">Create your first group to start organizing your files. Drag file extensions to groups to sort them automatically.</span>
                   </div>
-                  <span className="text-center text-sm text-darker">Drop files here</span>
-                </div>
-              </div>)
-              : <p>no</p>}
+                </div>}
+            </div>
+          </div>
+          {/* Actions */}
+          <div className="p-2 col-span-1 md:col-span-7 flex justify-end gap-5">
+            <button className="btn btn-outline">Reset groups</button>
+            <button className="btn btn-primary">Sort <ArrowRight size={16} /></button>
           </div>
         </div>
-        {/* Actions */}
-        <div className="p-2 col-span-1 md:col-span-7 flex justify-end gap-5">
-          <button className="btn btn-outline">Reset groups</button>
-          <button className="btn btn-primary">Sort <ArrowRight size={16} /></button>
-        </div>
-      </div>
+        <DragOverlay>
+          {activeId && activeId.split("-")[0] == "extension" ? (
+            <div className="p-5 bg-base-100 rounded-xl flex flex-col items-center justify-center gap-2 opacity-80 shadow-lg pointer-events-none">
+              <GripVertical size={12} className="text-darker" />
+              <FolderOpen size={12} className="text-accent" />
+              <p className="text-sm">{`.${extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")))?.name}`}</p>
+            </div>
+          ) : activeId && activeId.split("-")[0] == "file" ? (
+            <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5">
+              <GripVertical size={16} className="text-darker col-span-1" />
+              <FileIcon className='text-accent col-span-2' />
+              <div className="flex flex-col col-span-7">
+                <p className="line-clamp-2 break-all text-sm max-w-[180px]">{`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}</p>
+                <p className="text-darker text-xs">
+                  {(() => {
+                    const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));
+                    return file ? (file.size / 1024).toFixed(1) + " MB" : "";
+                  })()}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 };
