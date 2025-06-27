@@ -42,4 +42,15 @@ export class Extensions {
         return this.ExtensionList.map(callback);
     }
 
+    public removeExtensionByID(id: number): void {
+        this.ExtensionList = this.ExtensionList.filter(f => f.id !== id);
+    }
+
+    public clear() {
+        this.ExtensionList = [];
+    }
+    public sort() {
+        this.ExtensionList.sort((a, b) => a.count - b.count).reverse();
+    }
+
 }

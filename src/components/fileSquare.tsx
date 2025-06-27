@@ -7,9 +7,10 @@ type FileSquareProps = {
     fileIcon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
     fileName: string;
     fileSize: number;
+    isDragging: boolean;
 };
 
-const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize }: FileSquareProps) => {
+const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize, isDragging }: FileSquareProps) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: `file-${id}`
     });
@@ -22,7 +23,7 @@ const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize }: FileSquarePr
 
     return (
         <div ref={setNodeRef} className="tooltip" data-tip={fileName}>
-            <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5"
+            <div className={`text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5 ${isDragging ? "opacity-0" : "opacity-100"}`}
                 style={{ position: "relative", ...style }}
                 ref={setNodeRef}
                 {...listeners}

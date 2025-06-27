@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowRight, FileIcon, FileText, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
+import { ArrowRight, FileText, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import FileSquare from "./components/fileSquare";
@@ -18,15 +18,18 @@ export default function App() {
   const groupList = useRef(new Groups);
   const extensionList = useRef(new Extensions);
   const fileList = useRef(new Files);
+  const initialFileList = useRef(new Files);
+  const initialExtensionList = useRef(new Extensions);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [startFiles, setStartFiles] = useState<string[]>([]);
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupInputText, setGroupInputText] = useState("");
   const [invidualFilesSearchFieldVisibility, setInvidualFilesSearchFieldVisibility] = useState(false);
   const [invidualFilesSearchText, setInvidualFilesSearchText] = useState("");
+  const [invidualExtensionSearchFieldVisibility, setExtensionFilesSearchFieldVisibility] = useState(false);
+  const [invidualExtensionText, setInvidualExtensionSearchText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -36,12 +39,46 @@ export default function App() {
 
   interface SearchEvent extends React.ChangeEvent<HTMLInputElement> { }
 
+  // Funkcja pomocznicza, która porównuje zbiór initial i zwykłych plików i
+  // Na tej podstawie wyznacza ich róznice i tą róznicę zapisuje w files
+  function getUnsortedFiles(): File[] {
+    const allFiles = initialFileList.current.getFileList(); // Wszystkie pliki
+    const sortedFiles = groupList.current.getGroupList().flatMap(group =>
+      group.files ? group.files.getFileList() : []
+    );
+
+    const sortedFileNames = new Set(sortedFiles.map(f => f.name));
+    return allFiles.filter(f => !sortedFileNames.has(f.name));
+  }
+
   function searchInvidualFile(e: SearchEvent): void {
-    setInvidualFilesSearchText(e.target.value);
-    const filteredFiles = startFiles.filter((file: string) => file.startsWith(e.target.value));
-    if (filteredFiles.length > 0) {
-      setFiles(startFiles.filter((file: string) => file.startsWith(e.target.value)));
-    }
+    const query = e.target.value.toLowerCase();
+    setInvidualFilesSearchText(query);
+
+    const filtered = getUnsortedFiles().filter(file =>
+      file.name.toLowerCase().includes(query)
+    );
+    setFiles(filtered);
+  }
+
+  function getUnsortedExtensions(): Extension[] {
+    const allExtensions = initialExtensionList.current.getExtensionList(); // Wszystkie rozszerzenia
+    const sortedExtensions = groupList.current.getGroupList().flatMap(group =>
+      group.extensions ? group.extensions.getExtensionList() : []
+    );
+
+    const sortedExtensionNames = new Set(sortedExtensions.map(ext => ext.name));
+    return allExtensions.filter(ext => !sortedExtensionNames.has(ext.name));
+  }
+
+  function searchInvidualExtension(e: SearchEvent): void {
+    const query = e.target.value.toLowerCase();
+    setInvidualExtensionSearchText(query);
+
+    const filtered = getUnsortedExtensions().filter(extension =>
+      extension.name.toLowerCase().includes(query)
+    );
+    setExtensions(filtered);
   }
 
   function addNewGroup() {
@@ -84,8 +121,10 @@ export default function App() {
         fileList.current.addFile(newFile);
       });
 
+      fileList.current.sort();
+      initialFileList.current = fileList.current;
+
       setFiles(fileList.current.getFileList());
-      setStartFiles(filesResult);
       unpackExtensions(filesResult);
     } catch (error) {
       console.error('Error calling ls:', error);
@@ -94,7 +133,7 @@ export default function App() {
 
   function unpackExtensions(files: Array<String>) {
     files.forEach((file) => {
-      const pieces = file.split(".");
+      const pieces = file.toLowerCase().split(".");
       const extensionName = pieces[pieces.length - 1];
       const lastID = extensionList.current.getLastID();
 
@@ -109,17 +148,33 @@ export default function App() {
       }
     });
     // Zaktualizuj liste extension
+    extensionList.current.sort();
+    initialExtensionList.current = extensionList.current;
     setExtensions(extensionList.current.getExtensionList());
   }
 
   async function getDirectory() {
+    // Wyczyść wszystko
     setGroups([]);
+    groupList.current.clear();
+    fileList.current.clear();
+    extensionList.current.clear();
+    initialExtensionList.current.clear();
+    initialFileList.current.clear();
+    setInvidualExtensionSearchText("");
+    setInvidualFilesSearchText("");
+    setInvidualFilesSearchFieldVisibility(false);
+    setExtensionFilesSearchFieldVisibility(false);
+
+
+    // Wybierz directory
     const directory = await open({
       multiple: false,
       directory: true
     });
     if (!directory) return;
-    setDirectory(directory ?? "brak");
+
+    setDirectory(directory ?? "Directory not selected");
     callLs(directory);
   }
 
@@ -146,6 +201,15 @@ export default function App() {
       if (extensionToAdd && !currentGroup.extensions.extensionExistsByName(extensionToAdd.name)) {
         currentGroup.extensions.addExtension(extensionToAdd);
       }
+      // Usuń to ID z głównej listy extensions
+      extensionList.current.removeExtensionByID(extensionID);
+      const allUnsorted = extensionList.current.getExtensionList();
+
+      const filtered = allUnsorted.filter((extension) =>
+        extension.name.toLowerCase().includes(invidualExtensionText.toLowerCase())
+      );
+
+      setExtensions(filtered);
       setGroups(groupList.current.getGroupList());
     }
     else if (prefix == "file") {
@@ -165,32 +229,30 @@ export default function App() {
       }
       console.log(fileToAdd);
       console.log(currentGroup);
+      // Usuń to ID z głównej listy plików
+      fileList.current.removeFileByID(fileID);
+      const allUnsorted = fileList.current.getFileList();
+
+      const filtered = allUnsorted.filter((file) =>
+        file.name.toLowerCase().includes(invidualFilesSearchText.toLowerCase())
+      );
+
+      setFiles(filtered);
       setGroups(groupList.current.getGroupList());
     }
-
-
-
     else {
       throw ("error");
     }
-
-
-
-  }
-
-  if (files.length == 0) {
-    return <div className="w-full h-screen flex items-center justify-center">
-      <button className="btn btn-primary" onClick={getDirectory}>
-        <FolderOpen size={20} />
-        Change Folder</button>
-    </div>;
   }
   return (
     <div className="bg-base-300">
       {/* Navbar */}
       <div className="navbar bg-base-200 shadow-sm border-b-2 border-base-100-50 fixed z-50">
-        <div className="navbar-start pl-5 gap-5">
-          <h1 className="text-2xl font-semibold hidden md:block">File sorter</h1>
+        <div className="navbar-start pl-5 gap-5 items-center">
+          <div className="flex gap-2">
+            <img src="logo.png" className="w-8"></img>
+            <h1 className="text-2xl font-semibold hidden md:block">Sortra</h1>
+          </div>
           <div className="divider hidden md:visible">|</div>
           <div className="flex items-center gap-2 text-zinc-300 text-sm">
             <FolderOpen size={16} className="text-accent" />
@@ -221,7 +283,7 @@ export default function App() {
       >
         <div className="p-5 grid grid-cols-1 md:grid-cols-7 gap-5 text-center justify-center">
           {/* Invidual Files */}
-          <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96">
+          <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96 shadow-sm">
             <div className="flex justify-between items-center">
               <p className="font-semibold text-darker p-2 text-left">Individual Files</p>
               <button
@@ -240,23 +302,40 @@ export default function App() {
             }
             <div className={`grid grid-cols-1 gap-2 ${isDragging ? "overflow-hidden" : "overflow-y-scroll"} overflow-x-hidden`}>
               {files && files.map((file) => (
-                <FileSquare id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} />
+                <FileSquare id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
             </div>
           </div>
-          {/* File Extensions */}
-          <div className="col-span-1 md:col-span-5 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96">
-            <h1 className="text-2xl font-semibold">File extensions</h1>
-            <p className="text-darker">Drag extensions to groups to sort files automatically</p>
+          {/* Extensions */}
+          <div className="col-span-1 md:col-span-5 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96 shadow-sm">
+            <div className="flex justify-between">
+              <h1 className="text-2xl font-semibold">File extensions</h1>
+              <button
+                onClick={() => setExtensionFilesSearchFieldVisibility(!invidualExtensionSearchFieldVisibility)}
+                className="btn btn-ghost btn-xs btn-primary">
+                <Search className="text-darker" size={16} />
+              </button>
+            </div>
+            {invidualExtensionSearchFieldVisibility ?
+              <label
+                className="input w-full focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
+              >
+                <Search size={16} className="text-darker" />
+                <input value={invidualExtensionText} onChange={searchInvidualExtension} type="search" className="grow p-2" placeholder="Search" />
+              </label>
+              :
+              <p className="text-darker">Drag extensions to groups to sort files automatically</p>
+            }
+
             <div className={`grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
               {extensions && extensions.map((extension) =>
-                <ExtensionSquare id={extension.id} extensionName={extension.name} extensionCount={extension.count} />
+                <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
             </div>
           </div>
           {/* Summary */}
-          <div className="col-span-1 md:col-span-2">
-            <Summary filesLength={files.length} extensionsLength={extensions!.length} groupsLength={groups.length} />
+          <div className="col-span-1 md:col-span-2 shadow-sm">
+            <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
           </div>
           {/* Groups */}
           <div className="col-span-1 md:col-span-5">
@@ -291,16 +370,27 @@ export default function App() {
           </div>
         </div>
         <DragOverlay>
+          {/* Ghost Extension */}
           {activeId && activeId.split("-")[0] == "extension" ? (
             <div className="p-5 bg-base-100 rounded-xl flex flex-col items-center justify-center gap-2 opacity-80 shadow-lg pointer-events-none">
               <GripVertical size={12} className="text-darker" />
               <FolderOpen size={12} className="text-accent" />
-              <p className="text-sm">{`.${extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")))?.name}`}</p>
+              <p className="text-sm">
+                {(() => {
+                  const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                  return `.${extension?.name}`;
+                })()}
+              </p>
+              <p className="text-xs text-darker">{(() => {
+                const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                return `${extension?.count} files`;
+              })()}</p>
             </div>
+            // Ghost File
           ) : activeId && activeId.split("-")[0] == "file" ? (
             <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5">
               <GripVertical size={16} className="text-darker col-span-1" />
-              <FileIcon className='text-accent col-span-2' />
+              <FileText className='text-accent col-span-2' />
               <div className="flex flex-col col-span-7">
                 <p className="line-clamp-2 break-all text-sm max-w-[180px]">{`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}</p>
                 <p className="text-darker text-xs">

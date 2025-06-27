@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { FileIcon, Plus, Trash2 } from "lucide-react";
+import { FileText, Plus, Trash2 } from "lucide-react";
 import { Extensions } from "../models/extensionsModel";
 import { Files } from "../models/filesModel";
 
@@ -17,7 +17,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
         id: id
     });
     return (
-        <div ref={setNodeRef} className="border-2 border-base-100-50 border-dotted p-5 grid gap-2">
+        <div ref={setNodeRef} className="border-2 border-base-100-50 border-dotted p-5 grid gap-2 shadow-sm">
             <div className="flex justify-between items-center">
                 <p className="text-left">{groupName}</p>
                 <button onClick={onDelete} className="btn btn-ghost btn-error">
@@ -37,24 +37,25 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
                     <p className="text-left text-xs text-darker">Extensions: </p>
                     <div className="flex justify-start gap-2 flex-wrap items-center p-2">
                         {extensions.map(extension =>
-                            <div className="tooltip" data-tip={`${extension.count} files`}>
+                            <div key={extension.id} className="tooltip" data-tip={`${extension.count} files`}>
                                 <div className="badge badge-soft badge-primary">.{extension.name}</div>
                             </div>)}
                     </div>
                 </div>
                 : null}
             {files.getFilesCount() > 0 ?
-                <div>
+                <div className="overflow-scroll overflow-x-hidden h-36">
                     <p className="text-left text-xs text-darker">Files: </p>
                     <div className={`grid grid-cols-1 gap-2 overflow-x-hidden`}>
-                        {files.map(file => <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5">
+                        {files.map(file =>
+                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-10 items-center gap-5">
 
-                            <FileIcon className='text-accent col-span-2' />
-                            <div className="flex flex-col col-span-7">
-                                <p className="line-clamp-2 break-all text-sm max-w-[180px]">{file.name}</p>
-                                <p className="text-darker text-xs">{(file.size / (1024)).toFixed(1)} MB</p>
-                            </div>
-                        </div>)}
+                                <FileText className='text-accent col-span-2' />
+                                <div className="flex flex-col col-span-7">
+                                    <p className="line-clamp-2 break-all text-sm max-w-[180px]">{file.name}</p>
+                                    <p className="text-darker text-xs">{(file.size / (1024)).toFixed(1)} MB</p>
+                                </div>
+                            </div>)}
                     </div>
                 </div>
                 : null}

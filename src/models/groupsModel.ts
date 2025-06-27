@@ -36,4 +36,7 @@ export class Groups {
     public deleteGroupByID(id: number) {
         this.GroupList = this.GroupList.filter(group => group.id !== id);
     }
+    public clear() {
+        this.GroupList = [];
+    }
 }

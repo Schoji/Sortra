@@ -42,4 +42,14 @@ export class Files {
     public map<T>(callback: (file: File, index: number, array: File[]) => T): T[] {
         return this.FileList.map(callback);
     }
+
+    public removeFileByID(id: number): void {
+        this.FileList = this.FileList.filter(f => f.id !== id);
+    }
+    public clear() {
+        this.FileList = [];
+    }
+    public sort() {
+        this.FileList.sort((a, b) => a.name.localeCompare(b.name));
+    }
 }
