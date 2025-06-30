@@ -52,4 +52,11 @@ export class Files {
     public sort() {
         this.FileList.sort((a, b) => a.name.localeCompare(b.name));
     }
+    public getFilesByExtension(extension: string) {
+        const filesWithThatExtension = this.FileList.filter(file => {
+            const slices = file.name.split(".");
+            return slices[slices.length - 1] == extension;
+        });
+        return filesWithThatExtension;
+    }
 }

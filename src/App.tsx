@@ -13,6 +13,7 @@ import { Extensions } from "./models/extensionsModel";
 import { Extension } from "./models/extensionModel";
 import { Files } from "./models/filesModel";
 import { File } from "./models/fileModel";
+import Modal from "./components/modal";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -249,18 +250,16 @@ export default function App() {
       {/* Navbar */}
       <div className="navbar bg-base-200 shadow-sm border-b-2 border-base-100-50 fixed z-50">
         <div className="navbar-start pl-5 gap-5 items-center">
-          <div className="flex gap-2">
-            <img src="logo.png" className="w-8"></img>
-            <h1 className="text-2xl font-semibold hidden md:block">Sortra</h1>
+          <div className="flex gap-2 items-center">
+            <FolderOpen className="bg-primary p-1 rounded-md" />
+            <h1 className="text-xl font-semibold hidden md:block">Sortra</h1>
           </div>
-          <div className="divider hidden md:visible">|</div>
-          <div className="flex items-center gap-2 text-zinc-300 text-sm">
+          <div className="flex items-center gap-2 text-sm">
             <FolderOpen size={16} className="text-accent" />
-            {directory}
+            <p className="text-darker">{directory}</p>
           </div>
         </div>
         <div className="navbar-center">
-
         </div>
         <div className="navbar-end">
           <button className="btn btn-primary" onClick={getDirectory}>
@@ -342,7 +341,7 @@ export default function App() {
             <div className="flex justify-between">
               <h1 className="text-xl font-semibold">Groups</h1>
               <div className="flex gap-2">
-                <input className="input" placeholder="Group name" value={groupInputText} onChange={(e) => setGroupInputText(e.target.value)}></input>
+                <input className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none" placeholder="Group name" value={groupInputText} onChange={(e) => setGroupInputText(e.target.value)}></input>
                 <button className="btn btn-primary" onClick={addNewGroup}>+</button>
 
               </div>
@@ -366,7 +365,12 @@ export default function App() {
           {/* Actions */}
           <div className="p-2 col-span-1 md:col-span-7 flex justify-end gap-5">
             <button className="btn btn-outline">Reset groups</button>
-            <button className="btn btn-primary">Sort <ArrowRight size={16} /></button>
+            <button className="btn btn-primary" disabled={groupList.current.empty()} onClick={() => {
+              const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
+              if (modal) {
+                modal.showModal();
+              }
+            }}>Sort <ArrowRight size={16} /></button>
           </div>
         </div>
         <DragOverlay>
@@ -404,6 +408,7 @@ export default function App() {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <Modal groupList={groupList.current} files={initialFileList.current} directory={directory} />
     </div>
   );
 };

@@ -39,4 +39,15 @@ export class Groups {
     public clear() {
         this.GroupList = [];
     }
+    public empty() {
+        let counter = 0;
+        this.GroupList.forEach(group => {
+            if (group.extensions != null || group.files != null) {
+                if ((group.extensions && group.extensions.getExtensionsCount() > 0) || (group.files && group.files.getFilesCount() > 0)) {
+                    counter++;
+                }
+            }
+        });
+        return counter < 1;
+    }
 }
