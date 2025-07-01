@@ -50,4 +50,8 @@ export class Groups {
         });
         return counter < 1;
     }
+    public clearItems() {
+        this.GroupList.forEach(group => group.extensions?.clear());
+        this.GroupList.forEach(group => group.files?.clear());
+    }
 }

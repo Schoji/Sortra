@@ -8,3 +8,14 @@
         opacity: 0.5;
     }
 }
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #3f3f46;
+    /* np. Tailwind base-100 */
+    border-radius: 4px;
+
+}

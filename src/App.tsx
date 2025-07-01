@@ -14,6 +14,8 @@ import { Extension } from "./models/extensionModel";
 import { Files } from "./models/filesModel";
 import { File } from "./models/fileModel";
 import Modal from "./components/modal";
+import { motion } from "motion/react";
+// Removed: import { motion } from "motion/react";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -21,6 +23,7 @@ export default function App() {
   const fileList = useRef(new Files);
   const initialFileList = useRef(new Files);
   const initialExtensionList = useRef(new Extensions);
+  const groupInput = useRef<HTMLInputElement | null>(null);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -246,7 +249,7 @@ export default function App() {
     }
   }
   return (
-    <div className="bg-base-300">
+    <div className="bg-base-300 select-none">
       {/* Navbar */}
       <div className="navbar bg-base-200 shadow-sm border-b-2 border-base-100-50 fixed z-50">
         <div className="navbar-start pl-5 gap-5 items-center">
@@ -254,17 +257,33 @@ export default function App() {
             <FolderOpen className="bg-primary p-1 rounded-md" />
             <h1 className="text-xl font-semibold hidden md:block">Sortra</h1>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <FolderOpen size={16} className="text-accent" />
-            <p className="text-darker">{directory}</p>
-          </div>
+          {directory != "" ?
+            <div className="flex items-center gap-2 text-sm invisible sm:visible">
+              <FolderOpen size={16} className="text-accent" />
+              {/* Directory */}
+              <p className="text-darker">{directory}</p>
+            </div>
+            : null}
         </div>
         <div className="navbar-center">
         </div>
         <div className="navbar-end">
-          <button className="btn btn-primary" onClick={getDirectory}>
+          <motion.button className="btn btn-primary"
+            onClick={getDirectory}
+            animate={directory == "" ? { scale: [1, 1.1] } : { scale: 1 }}
+            transition={
+              directory == ""
+                ? {
+                  duration: 0.8,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                }
+                : { duration: 0 }
+            }>
             <FolderOpen size={20} />
-            Change Folder</button>
+            Change Folder
+          </motion.button>
         </div>
       </div>
       <div className="h-16"></div>
@@ -284,7 +303,7 @@ export default function App() {
           {/* Invidual Files */}
           <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96 shadow-sm">
             <div className="flex justify-between items-center">
-              <p className="font-semibold text-darker p-2 text-left">Individual Files</p>
+              <p className="font-semibold text-darker p-2 text-left visible">Individual Files</p>
               <button
                 onClick={() => setInvidualFilesSearchFieldVisibility(!invidualFilesSearchFieldVisibility)}
                 className="btn btn-ghost btn-xs btn-primary">
@@ -300,8 +319,8 @@ export default function App() {
               </label>
             }
             <div className={`grid grid-cols-1 gap-2 ${isDragging ? "overflow-hidden" : "overflow-y-scroll"} overflow-x-hidden`}>
-              {files && files.map((file) => (
-                <FileSquare id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
+              {files && files.map((file, idx) => (
+                <FileSquare order={idx} id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
             </div>
           </div>
@@ -325,7 +344,6 @@ export default function App() {
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-
             <div className={`grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
@@ -339,11 +357,39 @@ export default function App() {
           {/* Groups */}
           <div className="col-span-1 md:col-span-5">
             <div className="flex justify-between">
-              <h1 className="text-xl font-semibold">Groups</h1>
+              <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
               <div className="flex gap-2">
-                <input className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none" placeholder="Group name" value={groupInputText} onChange={(e) => setGroupInputText(e.target.value)}></input>
-                <button className="btn btn-primary" onClick={addNewGroup}>+</button>
-
+                {/* {Group Input} */}
+                <input
+                  ref={groupInput}
+                  className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
+                  placeholder="Group name"
+                  pattern={
+                    groupInputText !== ""
+                      ? "^(?!^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$)[^\\\\/:*?\"<>|.\\s][^\\\\/:*?\"<>|]{0,254}[^\\\\/:*?\"<>|.\\s]$"
+                      : undefined
+                  }
+                  value={groupInputText}
+                  onChange={(e) => setGroupInputText(e.target.value)}
+                />
+                <motion.button
+                  disabled={directory == "" ? true : false}
+                  className="btn btn-primary"
+                  onClick={addNewGroup}
+                  animate={directory != "" && groupList.current.getGroupsCount() == 0 ? { scale: [1, 1.1] } : { scale: 1 }}
+                  transition={
+                    directory != "" && groupList.current.getGroupsCount() == 0
+                      ? {
+                        duration: 0.8,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        ease: "easeInOut",
+                      }
+                      : { duration: 0 } // bez animacji, tylko szybki powrót
+                  }
+                >
+                  +
+                </motion.button>
               </div>
             </div>
             <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5">
@@ -364,7 +410,7 @@ export default function App() {
           </div>
           {/* Actions */}
           <div className="p-2 col-span-1 md:col-span-7 flex justify-end gap-5">
-            <button className="btn btn-outline">Reset groups</button>
+            <button className="btn btn-outline" onClick={() => groupList.current.clearItems()}>Reset groups</button>
             <button className="btn btn-primary" disabled={groupList.current.empty()} onClick={() => {
               const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
               if (modal) {
@@ -396,7 +442,9 @@ export default function App() {
               <GripVertical size={16} className="text-darker col-span-1" />
               <FileText className='text-accent col-span-2' />
               <div className="flex flex-col col-span-7">
-                <p className="line-clamp-2 break-all text-sm max-w-[180px]">{`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}</p>
+                <p className="line-clamp-2 break-all text-sm max-w-[180px]">
+                  {`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}
+                </p>
                 <p className="text-darker text-xs">
                   {(() => {
                     const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));

@@ -1,16 +1,18 @@
 import { useDraggable } from '@dnd-kit/core';
 import { GripVertical, LucideProps } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 
 type FileSquareProps = {
     id: number;
+    order: number;
     fileIcon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>;
     fileName: string;
     fileSize: number;
     isDragging: boolean;
 };
 
-const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize, isDragging }: FileSquareProps) => {
+const FileSquare = ({ id, order, fileIcon: FileIcon, fileName, fileSize, isDragging }: FileSquareProps) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: `file-${id}`
     });
@@ -20,9 +22,19 @@ const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize, isDragging }: 
         touchAction: "none", // Prevents scrolling while dragging on touch devices
     } : { touchAction: "none" };
 
-
     return (
-        <div ref={setNodeRef} className="tooltip" data-tip={fileName}>
+        <motion.div
+            ref={setNodeRef}
+            className="tooltip"
+            data-tip={fileName}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+                duration: 0.4,
+                ease: "easeOut",
+                delay: 0.05 + 0.01 * order, // możesz dać np. index * 0.05 jak chcesz sekwencję
+            }}
+        >
             <div className={`text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5 ${isDragging ? "opacity-0" : "opacity-100"}`}
                 style={{ position: "relative", ...style }}
                 ref={setNodeRef}
@@ -36,7 +48,7 @@ const FileSquare = ({ id, fileIcon: FileIcon, fileName, fileSize, isDragging }: 
                     <p className="text-darker text-xs">{(fileSize / (1024)).toFixed(1)} MB</p>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
