@@ -299,9 +299,9 @@ export default function App() {
           handleDragEnd(e);
         }}
       >
-        <div className="p-5 grid grid-cols-1 md:grid-cols-7 gap-5 text-center justify-center">
+        <div className="p-5 grid grid-cols-[minmax(200px,_400px),_1fr] gap-5 text-center justify-center">
           {/* Invidual Files */}
-          <div className="col-span-1 md:col-span-2 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96 shadow-sm">
+          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96 shadow-sm">
             <div className="flex justify-between items-center">
               <p className="font-semibold text-darker p-2 text-left visible">Individual Files</p>
               <button
@@ -325,7 +325,7 @@ export default function App() {
             </div>
           </div>
           {/* Extensions */}
-          <div className="col-span-1 md:col-span-5 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96 shadow-sm">
+          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96 shadow-sm">
             <div className="flex justify-between">
               <h1 className="text-2xl font-semibold">File extensions</h1>
               <button
@@ -344,18 +344,18 @@ export default function App() {
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-            <div className={`grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
+            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
             </div>
           </div>
           {/* Summary */}
-          <div className="col-span-1 md:col-span-2 shadow-sm">
+          <div className="col-span-1 shadow-sm">
             <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
           </div>
           {/* Groups */}
-          <div className="col-span-1 md:col-span-5">
+          <div className="col-span-1">
             <div className="flex justify-between">
               <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
               <div className="flex gap-2">
@@ -409,7 +409,7 @@ export default function App() {
             </div>
           </div>
           {/* Actions */}
-          <div className="p-2 col-span-1 md:col-span-7 flex justify-end gap-5">
+          <div className="p-2 col-span-1 col-start-2 flex justify-end gap-5">
             <button className="btn btn-outline" onClick={() => groupList.current.clearItems()}>Reset groups</button>
             <button className="btn btn-primary" disabled={groupList.current.empty()} onClick={() => {
               const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
