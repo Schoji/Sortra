@@ -15,7 +15,6 @@ import { Files } from "./models/filesModel";
 import { File } from "./models/fileModel";
 import Modal from "./components/modal";
 import { motion } from "motion/react";
-// Removed: import { motion } from "motion/react";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -23,7 +22,8 @@ export default function App() {
   const fileList = useRef(new Files);
   const initialFileList = useRef(new Files);
   const initialExtensionList = useRef(new Extensions);
-  const groupInput = useRef<HTMLInputElement | null>(null);
+  const extensionsRef = useRef<HTMLDivElement>(null);
+  const filesRef = useRef<HTMLDivElement>(null);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -290,11 +290,19 @@ export default function App() {
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          setIsDragging(true);
+          // setIsDragging(true);
+          if (extensionsRef.current && filesRef.current) {
+            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-hidden";
+            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden";
+          }
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          setIsDragging(false);
+          if (extensionsRef.current && filesRef.current) {
+            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-y-scroll";
+            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-y-scroll";
+          }
+          // setIsDragging(false);
           setActiveId(null);
           handleDragEnd(e);
         }}
@@ -318,7 +326,8 @@ export default function App() {
                 <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
               </label>
             }
-            <div className={`grid grid-cols-1 gap-2 ${isDragging ? "overflow-hidden" : "overflow-y-scroll"} overflow-x-hidden`}>
+            {/* Files Ref*/}
+            <div ref={filesRef} className={`grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden`}>
               {files && files.map((file, idx) => (
                 <FileSquare order={idx} id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
@@ -344,7 +353,7 @@ export default function App() {
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-            <div className={`grid-flow-row-dense grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
+            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-y-auto`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
@@ -361,7 +370,6 @@ export default function App() {
               <div className="flex gap-2">
                 {/* {Group Input} */}
                 <input
-                  ref={groupInput}
                   className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
                   placeholder="Group name"
                   pattern={
@@ -385,7 +393,7 @@ export default function App() {
                         repeatType: "reverse",
                         ease: "easeInOut",
                       }
-                      : { duration: 0 } // bez animacji, tylko szybki powrót
+                      : { duration: 0 }
                   }
                 >
                   +
