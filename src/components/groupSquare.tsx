@@ -17,7 +17,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
         id: id
     });
     return (
-        <div ref={setNodeRef} className="border-2 border-base-100-50 border-dotted p-5 grid gap-2 shadow-sm">
+        <div ref={setNodeRef} className="border-2 border-base-100-50 border-dotted p-5 grid grid-rows-[min-content_auto_auto] gap-2 shadow-sm min-h-0">
             <div className="flex justify-between items-center">
                 <p className="text-left">{groupName}</p>
                 <button onClick={onDelete} className="btn btn-ghost btn-error">
@@ -44,7 +44,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
                 </div>
                 : null}
             {files.getFilesCount() > 0 ?
-                <div className="overflow-scroll overflow-x-hidden h-36">
+                <div className="overflow-scroll overflow-x-hidden">
                     <p className="text-left text-xs text-darker">Files: </p>
                     <div className={`grid grid-cols-1 gap-2 overflow-x-hidden`}>
                         {files.map(file =>

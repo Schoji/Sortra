@@ -249,7 +249,7 @@ export default function App() {
     }
   }
   return (
-    <div className="bg-base-300 select-none">
+    <div className="bg-base-300 select-none flex flex-col">
       {/* Navbar */}
       <div className="navbar bg-base-200 shadow-sm border-b-2 border-base-100-50 fixed z-50">
         <div className="navbar-start pl-5 gap-5 items-center">
@@ -299,9 +299,9 @@ export default function App() {
           handleDragEnd(e);
         }}
       >
-        <div className="p-5 grid grid-cols-[minmax(200px,_400px),_1fr] gap-5 text-center justify-center">
+        <div className="h-[calc(100vh-64px)] p-5 grid grid-cols-[minmax(200px,_350px),_1fr] grid-rows-[3fr_2fr_min-content] gap-5 text-center justify-center">
           {/* Invidual Files */}
-          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 h-96 shadow-sm">
+          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 shadow-sm min-h-0">
             <div className="flex justify-between items-center">
               <p className="font-semibold text-darker p-2 text-left visible">Individual Files</p>
               <button
@@ -325,7 +325,7 @@ export default function App() {
             </div>
           </div>
           {/* Extensions */}
-          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 h-96 shadow-sm">
+          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 shadow-sm min-h-0">
             <div className="flex justify-between">
               <h1 className="text-2xl font-semibold">File extensions</h1>
               <button
@@ -344,7 +344,7 @@ export default function App() {
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full ${isDragging ? "overflow-hidden" : "overflow-y-scroll"}`}>
+            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 ${isDragging ? "overflow-hidden" : "overflow-y-auto"}`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
@@ -355,7 +355,7 @@ export default function App() {
             <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
           </div>
           {/* Groups */}
-          <div className="col-span-1">
+          <div className="col-span-1 max-h-[45vh]">
             <div className="flex justify-between">
               <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
               <div className="flex gap-2">
@@ -392,7 +392,7 @@ export default function App() {
                 </motion.button>
               </div>
             </div>
-            <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5">
+            <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5 h-[calc(100%-64px)]">
               {groups.length > 0 ? groups.map(group =>
                 <GroupSquare key={group.id} id={group.id} groupName={group.name} onDelete={() => deleteGroup(group.id)} extensions={group.extensions ?? new Extensions()} files={group.files ?? new Files()} />)
                 :
