@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowRight, FileText, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
+import { ArrowRight, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import FileSquare from "./components/fileSquare";
@@ -16,6 +16,7 @@ import { File } from "./models/fileModel";
 import Modal from "./components/modal";
 import { motion } from "motion/react";
 import { formatBytes } from "./functions/formatBytes";
+import { getIconByExtension } from "./functions/getIcon";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -283,8 +284,18 @@ export default function App() {
                   repeatType: "reverse",
                   ease: "easeInOut",
                 }
-                : { duration: 0 }
-            }>
+                : { duration: 0.2 }
+            }
+            whileHover={{
+              scale: 1.1,
+              y: -2,
+              boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
+              rotate: 3
+            }}
+            whileTap={{
+              scale: 0.95,
+              rotate: 0
+            }}>
             <FolderOpen size={20} />
             Change Folder
           </motion.button>
@@ -311,9 +322,13 @@ export default function App() {
           handleDragEnd(e);
         }}
       >
-        <div className="h-[calc(100vh-64px)] p-5 grid grid-cols-[minmax(200px,_350px),_1fr] grid-rows-[1fr_1fr_min-content] gap-5 text-center justify-center">
+        <div className="sm:h-[calc(100vh-64px)] p-5 grid grid-cols-1 grid-rows-auto sm:grid-cols-[minmax(200px,_350px),_1fr] sm:grid-rows-[4fr_2fr_min-content] gap-5 text-center justify-center">
           {/* Invidual Files */}
-          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 shadow-sm min-h-0">
+          <motion.div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 shadow-sm min-h-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
             <div className="flex justify-between items-center">
               <p className="font-semibold text-darker p-2 text-left visible">Individual Files</p>
               <button
@@ -322,28 +337,33 @@ export default function App() {
                 <Search className="text-darker" size={16} />
               </button>
             </div>
-            {invidualFilesSearchFieldVisibility &&
-              <label
+            {invidualFilesSearchFieldVisibility ?
+              <motion.label
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
                 className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
               >
                 <Search size={16} className="text-darker" />
                 <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
-              </label>
+              </motion.label>
+              :
+              <p className="text-xs text-left text-darker">Drag files to override extensions rules</p>
             }
             {/* Files Ref*/}
-            <div ref={filesRef} className={`grid gap-2 overflow-y-scroll`}>
+            <div ref={filesRef} className={`grid gap-2 overflow-y-scroll overflow-x-hidden`}>
               {files && files.map((file, idx) => (
-                <FileSquare order={idx} id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
+                <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
             </div>
-          </div>
+          </motion.div>
           {/* Extensions */}
-          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 shadow-sm min-h-0">
+          <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 text-left flex flex-col gap-2 shadow-sm min-h-0">
             <div className="flex justify-between">
-              <div className="flex items-center gap-2">
-                <div className="badge badge-primary rounded-full">2</div>
-                <h1 className="text-2xl font-semibold">File extensions</h1>
-              </div>
+              <h1 className="text-2xl font-semibold">File extensions</h1>
               <button
                 onClick={() => setExtensionFilesSearchFieldVisibility(!invidualExtensionSearchFieldVisibility)}
                 className="btn btn-ghost btn-xs btn-primary">
@@ -351,32 +371,35 @@ export default function App() {
               </button>
             </div>
             {invidualExtensionSearchFieldVisibility ?
-              <label
+              <motion.label
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
                 className="input w-full focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
               >
                 <Search size={16} className="text-darker" />
                 <input value={invidualExtensionText} onChange={searchInvidualExtension} type="search" className="grow p-2" placeholder="Search" />
-              </label>
+              </motion.label>
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 ${isDragging ? "overflow-hidden" : "overflow-y-auto"}`}>
+            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] overflow-x-hidden gap-5 ${isDragging ? "overflow-hidden" : "overflow-y-auto"}`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
             </div>
           </div>
           {/* Summary */}
-          <div className="shadow-sm">
+          <div className="col-span-1 shadow-sm">
             <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
           </div>
           {/* Groups */}
-          <div className="min-h-0 gap-5 flex flex-col">
+          <div className="col-span-1 max-h-[45vh]">
             <div className="flex justify-between">
-              <div className="flex gap-2">
-                <div className="badge badge-primary rounded-full">1</div>
-                <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
-              </div>
+              <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
               <div className="flex gap-2">
                 {/* {Group Input} */}
                 <input
@@ -403,16 +426,34 @@ export default function App() {
                         repeatType: "reverse",
                         ease: "easeInOut",
                       }
-                      : { duration: 0 }
+                      : { duration: 0.2 }
+
                   }
+                  whileHover={{
+                    scale: 1.1,
+                    y: -2,
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
+                    rotate: 3
+                  }}
+                  whileTap={{
+                    scale: 0.95,
+                    rotate: 0
+                  }}
                 >
                   +
                 </motion.button>
               </div>
             </div>
-            <div ref={setNodeRef} className="grid lg:grid-cols-[repeat(auto-fit,_minmax(260px,_1fr))] grid-cols-1 gap-5 min-h-0 h-full">
+            <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5 h-[calc(100%-64px)]">
               {groups.length > 0 ? groups.map(group =>
-                <GroupSquare key={group.id} id={group.id} groupName={group.name} onDelete={() => deleteGroup(group.id)} extensions={group.extensions ?? new Extensions()} files={group.files ?? new Files()} />)
+                <GroupSquare
+                  key={group.id}
+                  id={group.id}
+                  groupName={group.name}
+                  onDelete={() => deleteGroup(group.id)}
+                  onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
+                  extensions={group.extensions ?? new Extensions()}
+                  files={group.files ?? new Files()} />)
                 :
                 // No groups
                 <div className="col-span-2 border-2 border-base-100-50 border-dotted p-5">
@@ -440,12 +481,20 @@ export default function App() {
             }}>Sort <ArrowRight size={16} /></button>
           </div>
         </div>
-        <DragOverlay>
+        <DragOverlay dropAnimation={{
+          duration: 500,
+          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+        }}>
           {/* Ghost Extension */}
           {activeId && activeId.split("-")[0] == "extension" ? (
             <div className="p-5 bg-base-100 rounded-xl flex flex-col items-center justify-center gap-2 opacity-80 shadow-lg pointer-events-none">
               <GripVertical size={12} className="text-darker" />
-              <FolderOpen size={12} className="text-accent" />
+              {(() => {
+                const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                const fileExtension = "." + extension?.name.split(".")[extension?.name.split(".").length - 1];
+                const IconComponent = getIconByExtension(fileExtension);
+                return <IconComponent className="text-accent" size={12} />;
+              })()}
               <p className="text-sm">
                 {(() => {
                   const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
@@ -461,7 +510,12 @@ export default function App() {
           ) : activeId && activeId.split("-")[0] == "file" ? (
             <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5">
               <GripVertical size={16} className="text-darker col-span-1" />
-              <FileText className='text-accent col-span-2' />
+              {(() => {
+                const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));
+                const fileExtension = "." + file?.name.split(".")[file?.name.split(".").length - 1];
+                const IconComponent = getIconByExtension(fileExtension);
+                return <IconComponent className="text-accent col-span-2" />;
+              })()}
               <div className="flex flex-col col-span-7">
                 <p className="line-clamp-2 break-all text-sm max-w-[180px]">
                   {`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}

@@ -1,5 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
-import { FolderOpen, GripVertical } from "lucide-react";
+import { GripVertical } from "lucide-react";
+import { getIconByExtension } from "../functions/getIcon";
+import { motion } from "motion/react";
 
 type extensionSquareProps = {
     id: number;
@@ -19,8 +21,22 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
     } : { touchAction: "none" };
 
     return (
-        <div
-            className={`hover:brightness-200 cursor-grab p-5 bg-base-100 rounded-xl flex flex-col items-center justify-center gap-2 ${isDragging ? "opacity-0" : "opacity-100"}`}
+        <motion.div
+            transition={{
+                duration: 0.4,
+                ease: "easeOut",
+                delay: 0.05
+            }}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            whileHover={{
+                scale: 1.02,
+                x: 0,
+                transition: { type: "spring", stiffness: 300 },
+            }}
+            whileTap={{ scale: 0.98 }}
+            className={`shadow-sm cursor-grab p-5 bg-base-100 hover:bg-base-100-50 rounded-xl flex flex-col items-center justify-center gap-2 ${isDragging ? "opacity-0" : "opacity-100"}`}
             key={id}
             style={{ position: "relative", ...style }}
             ref={setNodeRef}
@@ -29,10 +45,14 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
             onTouchMove={e => e.stopPropagation()}
         >
             <GripVertical size={12} className="text-darker" />
-            <FolderOpen size={12} className="text-accent" />
+            {(() => {
+                const fileExtension = "." + extensionName.split(".")[extensionName.split(".").length - 1];
+                const IconComponent = getIconByExtension(fileExtension);
+                return <IconComponent className="text-accent" size={12} />;
+            })()}
             <p className="text-sm">{`.${extensionName}`}</p>
             <p className="text-xs text-darker">{`${extensionCount} files`}</p>
-        </div>
+        </motion.div>
     );
 };
 

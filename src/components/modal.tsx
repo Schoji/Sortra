@@ -43,9 +43,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
 
             unlistenProgress = await listen('sort-progress', (event) => {
                 const result: progress = JSON.parse(event.payload as string);
-                console.log("RESULT", result);
                 setProgress({ "value": result.value, "max": result.max });
-                console.log("PROGRESS", progress);
             });
         })();
 
@@ -54,7 +52,6 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
             if (unlistenProgress) unlistenProgress();
         };
     }, []);
-
 
     async function sort() {
         setProgress(initialProgress);
@@ -66,6 +63,12 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                 const filesFromExtension = files.getFilesByExtension(extension.name).map(file => file.name);
                 result[group.name] = [...result[group.name], ...filesFromExtension];
             });
+            group.files?.getFileList().forEach(file => {
+                // Remove previous occurrences of the file (by name)
+                result[group.name] = result[group.name].filter(resultFileName => resultFileName !== file.name);
+                // Add the file to the current group
+                result[group.name].push(file.name);
+            });
         }
         );
         setStage(1);
@@ -75,7 +78,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
     return (
         <dialog id="my_modal_1" className="modal">
             {stage == 0 ?
-                <div className="modal-box grid gap-5 bg-base-200 border-2 border-base-100-50">
+                <div className="modal-box grid gap-5 bg-base-200 border-2 border-base-100-50 max-w-none w-2/3">
                     <div className="grid gap-1">
                         <div className="flex gap-2 items-center">
                             <Folder size={20} className="text-primary" />
@@ -97,12 +100,13 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                 const fileCount = group.files ? group.files.getFilesCount() : 0;
                                 return total + extCount + fileCount;
                             }, 0)}</span> files to their respective group directories</li>
-
                             <li>Organize files by their extensions automatically</li>
                         </ul>
                     </div>
                     <h1>What will happen:</h1>
                     {groupList.getGroupList().map(group =>
+                        (group.extensions ||
+                            group.files) && ((group.extensions && group.extensions.getExtensionsCount() > 0) || (group.files && group.files.getFilesCount() > 0)) &&
                         <div className="bg-base-200 p-5 border-2 border-base-100-50 rounded-xl" key={group.id}>
                             <div className="flex items-center justify-between">
                                 <div className="flex gap-2 items-center">
