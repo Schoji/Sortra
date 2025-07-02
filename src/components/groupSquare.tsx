@@ -2,6 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { FileText, Plus, Trash2 } from "lucide-react";
 import { Extensions } from "../models/extensionsModel";
 import { Files } from "../models/filesModel";
+import { formatBytes } from "../functions/formatBytes";
 
 
 type groupSquareProps = {
@@ -49,11 +50,10 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
                     <div className={`grid grid-cols-1 gap-2 overflow-x-hidden`}>
                         {files.map(file =>
                             <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-10 items-center gap-5">
-
                                 <FileText className='text-accent col-span-2' />
                                 <div className="flex flex-col col-span-7">
                                     <p className="line-clamp-2 break-all text-sm max-w-[180px]">{file.name}</p>
-                                    <p className="text-darker text-xs">{(file.size / (1024)).toFixed(1)} MB</p>
+                                    <p className="text-darker text-xs">{formatBytes(file.size)}</p>
                                 </div>
                             </div>)}
                     </div>

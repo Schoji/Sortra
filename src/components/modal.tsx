@@ -119,7 +119,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                 </div>
                             </div>
                             <div className="grid gap-2 p-3">
-                                <p className="text-xs text-darker">Extensions to move</p>
+                                {group.extensions && <p className="text-xs text-darker">Extensions to move</p>}
                                 {group.extensions && group.extensions.map(extension =>
                                     <div className="p-4 flex justify-between items-center bg-base-100 rounded-md" key={extension.id}>
                                         <div className="flex gap-2 items-center">
@@ -131,7 +131,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                         <div className="badge badge-soft badge-accent badge-xs">{files.getFilesByExtension(extension.name).length}</div>
                                     </div>
                                 )}
-                                <p className="text-xs text-darker">Files to move</p>
+                                {group.files && <p className="text-xs text-darker">Files to move</p>}
                                 <div className="overflow-scroll overflow-x-hidden overflow-y-auto h-24 grid gap-2">
                                     {group.files && group.files.map(file =>
                                         <div className="p-4 flex justify-between items-center bg-base-100 rounded-md" key={file.id}>
