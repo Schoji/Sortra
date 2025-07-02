@@ -45,13 +45,13 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete }: groupSquare
                 </div>
                 : null}
             {files.getFilesCount() > 0 ?
-                <div className="overflow-scroll overflow-x-hidden">
+                <div className="overflow-auto">
                     <p className="text-left text-xs text-darker">Files: </p>
-                    <div className={`grid grid-cols-1 gap-2 overflow-x-hidden`}>
+                    <div className={`grid grid-cols-[repeat(auto-fit,_minmax(220px,_1fr))] gap-2`}>
                         {files.map(file =>
-                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-10 items-center gap-5">
-                                <FileText className='text-accent col-span-2' />
-                                <div className="flex flex-col col-span-7">
+                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-5">
+                                <FileText className='text-accent' />
+                                <div className="flex flex-col">
                                     <p className="line-clamp-2 break-all text-sm max-w-[180px]">{file.name}</p>
                                     <p className="text-darker text-xs">{formatBytes(file.size)}</p>
                                 </div>

@@ -27,7 +27,7 @@ const FileSquare = ({ id, order, fileIcon: FileIcon, fileName, fileSize, isDragg
     return (
         <motion.div
             ref={setNodeRef}
-            className="tooltip"
+            className="max-w-full"
             data-tip={fileName}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -37,16 +37,16 @@ const FileSquare = ({ id, order, fileIcon: FileIcon, fileName, fileSize, isDragg
                 delay: 0.05 + 0.01 * order, // możesz dać np. index * 0.05 jak chcesz sekwencję
             }}
         >
-            <div className={`text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5 ${isDragging ? "opacity-0" : "opacity-100"}`}
+            <div className={`text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-5 ${isDragging ? "opacity-0" : "opacity-100"}`}
                 style={{ position: "relative", ...style }}
                 ref={setNodeRef}
                 {...listeners}
                 {...attributes}
                 onTouchMove={e => e.stopPropagation()}>
-                <GripVertical size={16} className="text-darker col-span-1" />
-                <FileIcon className='text-accent col-span-2' />
-                <div className="flex flex-col col-span-7">
-                    <p className="line-clamp-2 break-all text-sm max-w-[180px]">{fileName}</p>
+                <GripVertical size={16} className="text-darker" />
+                <FileIcon className='text-accent' />
+                <div className="flex flex-col">
+                    <p className="line-clamp-2 break-all text-sm">{fileName}</p>
                     <p className="text-darker text-xs">{formatBytes(fileSize)}</p>
                 </div>
             </div>

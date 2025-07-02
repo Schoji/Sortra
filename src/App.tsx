@@ -311,7 +311,7 @@ export default function App() {
           handleDragEnd(e);
         }}
       >
-        <div className="h-[calc(100vh-64px)] p-5 grid grid-cols-[minmax(200px,_350px),_1fr] grid-rows-[3fr_2fr_min-content] gap-5 text-center justify-center">
+        <div className="h-[calc(100vh-64px)] p-5 grid grid-cols-[minmax(200px,_350px),_1fr] grid-rows-[1fr_1fr_min-content] gap-5 text-center justify-center">
           {/* Invidual Files */}
           <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 shadow-sm min-h-0">
             <div className="flex justify-between items-center">
@@ -367,11 +367,11 @@ export default function App() {
             </div>
           </div>
           {/* Summary */}
-          <div className="col-span-1 shadow-sm">
+          <div className="shadow-sm">
             <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
           </div>
           {/* Groups */}
-          <div className="col-span-1 max-h-[45vh]">
+          <div className="min-h-0 gap-5 flex flex-col">
             <div className="flex justify-between">
               <div className="flex gap-2">
                 <div className="badge badge-primary rounded-full">1</div>
@@ -410,7 +410,7 @@ export default function App() {
                 </motion.button>
               </div>
             </div>
-            <div ref={setNodeRef} className="pt-5 grid grid-cols-2 gap-5 h-[calc(100%-64px)]">
+            <div ref={setNodeRef} className="grid lg:grid-cols-[repeat(auto-fit,_minmax(260px,_1fr))] grid-cols-1 gap-5 min-h-0 h-full">
               {groups.length > 0 ? groups.map(group =>
                 <GroupSquare key={group.id} id={group.id} groupName={group.name} onDelete={() => deleteGroup(group.id)} extensions={group.extensions ?? new Extensions()} files={group.files ?? new Files()} />)
                 :
