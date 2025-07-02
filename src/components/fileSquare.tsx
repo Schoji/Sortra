@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { GripVertical, LucideProps } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
+import { formatBytes } from '../functions/formatBytes';
 
 type FileSquareProps = {
     id: number;
@@ -21,6 +22,7 @@ const FileSquare = ({ id, order, fileIcon: FileIcon, fileName, fileSize, isDragg
         transform: `translate(${transform.x}px, ${transform.y}px)`,
         touchAction: "none", // Prevents scrolling while dragging on touch devices
     } : { touchAction: "none" };
+
 
     return (
         <motion.div
@@ -45,7 +47,7 @@ const FileSquare = ({ id, order, fileIcon: FileIcon, fileName, fileSize, isDragg
                 <FileIcon className='text-accent col-span-2' />
                 <div className="flex flex-col col-span-7">
                     <p className="line-clamp-2 break-all text-sm max-w-[180px]">{fileName}</p>
-                    <p className="text-darker text-xs">{(fileSize / (1024)).toFixed(1)} MB</p>
+                    <p className="text-darker text-xs">{formatBytes(fileSize)}</p>
                 </div>
             </div>
         </motion.div>

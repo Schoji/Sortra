@@ -15,7 +15,7 @@ import { Files } from "./models/filesModel";
 import { File } from "./models/fileModel";
 import Modal from "./components/modal";
 import { motion } from "motion/react";
-// Removed: import { motion } from "motion/react";
+import { formatBytes } from "./functions/formatBytes";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -23,7 +23,8 @@ export default function App() {
   const fileList = useRef(new Files);
   const initialFileList = useRef(new Files);
   const initialExtensionList = useRef(new Extensions);
-  const groupInput = useRef<HTMLInputElement | null>(null);
+  const extensionsRef = useRef<HTMLDivElement>(null);
+  const filesRef = useRef<HTMLDivElement>(null);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -117,11 +118,14 @@ export default function App() {
   // Function to call the Rust "ls" command
   async function callLs(directory: string) {
     try {
-      const filesResult = await invoke<string[]>('ls', { dir: directory });
+      const filesResult: string[] = await invoke<string[]>('ls', { dir: directory });
 
       filesResult.forEach(file => {
+        const fileName = file[0];
+        const fileSize: number = file[1] as unknown as number;
+
         const lastID = fileList.current.getLastID();
-        const newFile = new File(lastID + 1, file, 5100);
+        const newFile = new File(lastID + 1, fileName, fileSize);
         fileList.current.addFile(newFile);
       });
 
@@ -137,7 +141,7 @@ export default function App() {
 
   function unpackExtensions(files: Array<String>) {
     files.forEach((file) => {
-      const pieces = file.toLowerCase().split(".");
+      const pieces = file[0].toLowerCase().split(".");
       const extensionName = pieces[pieces.length - 1];
       const lastID = extensionList.current.getLastID();
 
@@ -290,11 +294,19 @@ export default function App() {
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          setIsDragging(true);
+          // setIsDragging(true);
+          if (extensionsRef.current && filesRef.current) {
+            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-hidden";
+            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden";
+          }
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          setIsDragging(false);
+          if (extensionsRef.current && filesRef.current) {
+            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-y-scroll";
+            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-y-scroll";
+          }
+          // setIsDragging(false);
           setActiveId(null);
           handleDragEnd(e);
         }}
@@ -318,7 +330,8 @@ export default function App() {
                 <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
               </label>
             }
-            <div className={`grid grid-cols-1 gap-2 ${isDragging ? "overflow-hidden" : "overflow-y-scroll"} overflow-x-hidden`}>
+            {/* Files Ref*/}
+            <div ref={filesRef} className={`grid gap-2 overflow-y-scroll`}>
               {files && files.map((file, idx) => (
                 <FileSquare order={idx} id={file.id} fileIcon={FileText} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
@@ -327,7 +340,10 @@ export default function App() {
           {/* Extensions */}
           <div className="col-span-1 bg-base-200 rounded-xl border-2 border-base-100-50 p-10 text-left flex flex-col gap-2 shadow-sm min-h-0">
             <div className="flex justify-between">
-              <h1 className="text-2xl font-semibold">File extensions</h1>
+              <div className="flex items-center gap-2">
+                <div className="badge badge-primary rounded-full">2</div>
+                <h1 className="text-2xl font-semibold">File extensions</h1>
+              </div>
               <button
                 onClick={() => setExtensionFilesSearchFieldVisibility(!invidualExtensionSearchFieldVisibility)}
                 className="btn btn-ghost btn-xs btn-primary">
@@ -357,11 +373,13 @@ export default function App() {
           {/* Groups */}
           <div className="col-span-1 max-h-[45vh]">
             <div className="flex justify-between">
-              <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
+              <div className="flex gap-2">
+                <div className="badge badge-primary rounded-full">1</div>
+                <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
+              </div>
               <div className="flex gap-2">
                 {/* {Group Input} */}
                 <input
-                  ref={groupInput}
                   className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
                   placeholder="Group name"
                   pattern={
@@ -385,7 +403,7 @@ export default function App() {
                         repeatType: "reverse",
                         ease: "easeInOut",
                       }
-                      : { duration: 0 } // bez animacji, tylko szybki powrót
+                      : { duration: 0 }
                   }
                 >
                   +
@@ -410,7 +428,10 @@ export default function App() {
           </div>
           {/* Actions */}
           <div className="p-2 col-span-1 col-start-2 flex justify-end gap-5">
-            <button className="btn btn-outline" onClick={() => groupList.current.clearItems()}>Reset groups</button>
+            <button className="btn btn-outline" onClick={() => {
+              setGroups([]);
+              groupList.current.clearItems();
+            }}>Reset groups</button>
             <button className="btn btn-primary" disabled={groupList.current.empty()} onClick={() => {
               const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
               if (modal) {
@@ -448,7 +469,8 @@ export default function App() {
                 <p className="text-darker text-xs">
                   {(() => {
                     const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));
-                    return file ? (file.size / 1024).toFixed(1) + " MB" : "";
+                    if (file)
+                      return formatBytes(file.size);
                   })()}
                 </p>
               </div>

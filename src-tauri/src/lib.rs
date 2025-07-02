@@ -12,22 +12,23 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 #[tauri::command]
-fn ls(dir: &Path) -> Vec<String> {
+fn ls(dir: &Path) -> Vec<(String, u64)> {
     let paths = fs::read_dir(dir)
         .unwrap()
         .filter_map(|e| e.ok())
         .filter_map(|entry| {
             match entry.metadata() {
-                Ok(meta) if meta.is_file() == true => Some(entry),
+                Ok(meta) if meta.is_file() && !entry.file_name().to_string_lossy().starts_with(".") == true => {
+                    let file_size = meta.len();
+                    let file_name = entry.path().strip_prefix(dir).ok().map(|p| p.to_string_lossy().into_owned());
+                    file_name.map(|name| (name, file_size))
+                },
                 _ => None,
             }
         })
-        .filter_map(|e| e.path().strip_prefix(dir).ok().map(|p| p.to_string_lossy().into_owned()))
-        .filter(|e| !e.starts_with("."))
-        .collect::<Vec<_>>();
+        .collect();
     paths
 }
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
