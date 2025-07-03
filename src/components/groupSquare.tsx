@@ -14,9 +14,10 @@ type groupSquareProps = {
     files: Files;
     onDelete: () => void,
     onExtensionRemove: (extensionId: number) => void;
+    onFileRemove: (fileId: number) => void;
 };
 
-const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRemove }: groupSquareProps) => {
+const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRemove, onFileRemove }: groupSquareProps) => {
     const { setNodeRef } = useDroppable({
         id: id
     });
@@ -89,7 +90,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                     <p className="text-left text-xs text-darker">Files: </p>
                     <div className={`grid grid-cols-[repeat(auto-fit,_minmax(220px,_1fr))] gap-2`}>
                         {files.map(file =>
-                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-2">
+                            <div key={file.id} className="group relative text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-2">
                                 {(() => {
                                     const fileExtension = "." + file.name.split(".")[file.name.split(".").length - 1];
                                     const IconComponent = getIconByExtension(fileExtension);
@@ -99,6 +100,19 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                                     <p className="line-clamp-2 break-all text-sm max-w-[180px]">{file.name}</p>
                                     <p className="text-darker text-xs">{formatBytes(file.size)}</p>
                                 </div>
+                                <motion.button
+                                    onClick={() => {
+                                        files.removeFileByID(file.id);
+                                        onFileRemove(file.id);
+                                    }}
+                                    whileHover={{ scale: 1.2, rotate: 90 }}
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    className="absolute right-4 bg-error rounded-full w-4 h-4 text-xs hidden group-hover:flex badge badge-xs"
+                                >
+                                    ✕
+                                </motion.button>
                             </div>)}
                     </div>
                 </div>

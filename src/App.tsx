@@ -24,8 +24,6 @@ export default function App() {
   const fileList = useRef(new Files);
   const initialFileList = useRef(new Files);
   const initialExtensionList = useRef(new Extensions);
-  const extensionsRef = useRef<HTMLDivElement>(null);
-  const filesRef = useRef<HTMLDivElement>(null);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -305,19 +303,12 @@ export default function App() {
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          // setIsDragging(true);
-          if (extensionsRef.current && filesRef.current) {
-            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-hidden";
-            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden";
-          }
+          setIsDragging(true);
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          if (extensionsRef.current && filesRef.current) {
-            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-y-scroll";
-            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-y-scroll";
-          }
-          // setIsDragging(false);
+          setIsDragging(false);
+          console.log("dupsonnn");
           setActiveId(null);
           handleDragEnd(e);
         }}
@@ -355,15 +346,21 @@ export default function App() {
                 <p className="text-xs text-left text-darker">Drag files to override extensions rules</p>
               }
               {/* Files Ref*/}
-              <div ref={filesRef} className={`grid gap-2 overflow-y-scroll overflow-x-hidden`}>
-                {files && files.map((file, idx) => (
-                  <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
-                ))}
+              <div className={`grid gap-2 ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden"}`}>
+              {files && files.map((file, idx) => (
+                <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
+              ))}
               </div>
             </motion.div>
             {/* Summary */}
             <div className="shadow-sm row-start-1 sm:row-start-2">
-              <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
+              <Summary
+              filesLength={initialFileList.current.getFilesCount()}
+              extensionsLength={extensions!.length}
+              groupsLength={groups.length}
+              totalSize={getUnsortedFiles().reduce((acc, file) => acc + file.size, 0)}
+              mostCountedExtension={`.${extensionList.current.getExtensionWithMostCount()?.name ?? "ext"} (${extensionList.current.getExtensionWithMostCount()?.count ?? "0"})`}
+              />
             </div>
           </div>
           <div className="grid max-sm:grid-rows-[225px_1fr_min-content] grid-rows-[205px_1fr_min-content] gap-4 min-h-0">
@@ -393,14 +390,14 @@ export default function App() {
                 :
                 <p className="text-darker">Drag extensions to groups to sort files automatically</p>
               }
-              <div className={`grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] overflow-x-hidden gap-4 snap-y snap-mandatory min-h-[90px] ${isDragging ? "overflow-hidden" : "overflow-y-auto"}`}>
+              <div className={`grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] overflow-x-hidden gap-4 snap-y snap-mandatory min-h-[90px] ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
                 {extensions && extensions.map((extension) =>
                   <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
                 )}
               </div>
             </div>
             {/* Groups */}
-            <div className="max-sm:min-h-[minax(300px,_1000px)] min-h-0 flex flex-col gap-4">
+            <div className="min-h-0 flex flex-col gap-4">
               <div className="flex justify-between">
                 <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
                 <div className="flex gap-2">
@@ -455,6 +452,7 @@ export default function App() {
                     groupName={group.name}
                     onDelete={() => deleteGroup(group.id)}
                     onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
+                    onFileRemove={() => setGroups([...groupList.current.getGroupList()])}
                     extensions={group.extensions ?? new Extensions()}
                     files={group.files ?? new Files()} />)
                   :
