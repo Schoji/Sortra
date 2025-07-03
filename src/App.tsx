@@ -24,8 +24,6 @@ export default function App() {
   const fileList = useRef(new Files);
   const initialFileList = useRef(new Files);
   const initialExtensionList = useRef(new Extensions);
-  const extensionsRef = useRef<HTMLDivElement>(null);
-  const filesRef = useRef<HTMLDivElement>(null);
 
   const [directory, setDirectory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -305,19 +303,11 @@ export default function App() {
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          // setIsDragging(true);
-          if (extensionsRef.current && filesRef.current) {
-            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-hidden";
-            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-x-hidden";
-          }
+          setIsDragging(true);
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          if (extensionsRef.current && filesRef.current) {
-            extensionsRef.current!.className = "grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] gap-5 w-full overflow-y-scroll";
-            filesRef.current!.className = "grid grid-cols-1 gap-2 overflow-y-scroll overflow-y-scroll";
-          }
-          // setIsDragging(false);
+          setIsDragging(false);
           setActiveId(null);
           handleDragEnd(e);
         }}
@@ -354,7 +344,7 @@ export default function App() {
               <p className="text-xs text-left text-darker">Drag files to override extensions rules</p>
             }
             {/* Files Ref*/}
-            <div ref={filesRef} className={`grid gap-2 overflow-y-scroll overflow-x-hidden`}>
+            <div className={`grid gap-2 ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden"}`}>
               {files && files.map((file, idx) => (
                 <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
               ))}
@@ -386,7 +376,7 @@ export default function App() {
               :
               <p className="text-darker">Drag extensions to groups to sort files automatically</p>
             }
-            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] overflow-x-hidden gap-5 ${isDragging ? "overflow-hidden" : "overflow-y-auto"}`}>
+            <div className={`grid grid-cols-[repeat(auto-fit,_minmax(100px,_1fr))] overflow-x-hidden gap-5 ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
               {extensions && extensions.map((extension) =>
                 <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
               )}
@@ -394,7 +384,13 @@ export default function App() {
           </div>
           {/* Summary */}
           <div className="col-span-1 shadow-sm">
-            <Summary filesLength={initialFileList.current.getFilesCount()} extensionsLength={extensions!.length} groupsLength={groups.length} />
+            <Summary
+              filesLength={initialFileList.current.getFilesCount()}
+              extensionsLength={extensions!.length}
+              groupsLength={groups.length}
+              totalSize={getUnsortedFiles().reduce((acc, file) => acc + file.size, 0)}
+              mostCountedExtension={`.${extensionList.current.getExtensionWithMostCount()?.name ?? "ext"} (${extensionList.current.getExtensionWithMostCount()?.count ?? "0"})`}
+            />
           </div>
           {/* Groups */}
           <div className="col-span-1 max-h-[45vh]">
@@ -452,6 +448,7 @@ export default function App() {
                   groupName={group.name}
                   onDelete={() => deleteGroup(group.id)}
                   onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
+                  onFileRemove={() => setGroups([...groupList.current.getGroupList()])}
                   extensions={group.extensions ?? new Extensions()}
                   files={group.files ?? new Files()} />)
                 :
@@ -532,6 +529,7 @@ export default function App() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
       <Modal groupList={groupList.current} files={initialFileList.current} directory={directory} />
     </div>
   );

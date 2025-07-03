@@ -52,6 +52,8 @@ export class Extensions {
     public sort() {
         this.ExtensionList.sort((a, b) => a.count - b.count).reverse();
     }
-
-
+    public getExtensionWithMostCount(): Extension | null {
+        if (this.ExtensionList.length === 0) return null;
+        return this.ExtensionList.reduce((max, ext) => ext.count > max.count ? ext : max, this.ExtensionList[0]);
+    }
 }
