@@ -36,7 +36,7 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
                 transition: { type: "spring", stiffness: 300 },
             }}
             whileTap={{ scale: 0.98 }}
-            className={`shadow-sm cursor-grab p-5 bg-base-100 hover:bg-base-100-50 rounded-xl flex flex-col items-center justify-center gap-2 ${isDragging ? "opacity-0" : "opacity-100"}`}
+            className={`h-[90px] shadow-sm cursor-grab p-3 bg-base-100 hover:bg-base-100-50 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-1 snap-start snap-always ${isDragging ? "opacity-0" : "opacity-100"}`}
             key={id}
             style={{ position: "relative", ...style }}
             ref={setNodeRef}
@@ -44,14 +44,16 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
             {...attributes}
             onTouchMove={e => e.stopPropagation()}
         >
-            <GripVertical size={12} className="text-darker" />
-            {(() => {
+            <GripVertical size={16} className="text-darker" />
+            <div className="flex flex-col items-center gap-1">
+                {(() => {
                 const fileExtension = "." + extensionName.split(".")[extensionName.split(".").length - 1];
                 const IconComponent = getIconByExtension(fileExtension);
                 return <IconComponent className="text-accent" size={12} />;
-            })()}
-            <p className="text-sm">{`.${extensionName}`}</p>
-            <p className="text-xs text-darker">{`${extensionCount} files`}</p>
+                })()}
+                <p className="text-sm">{`.${extensionName}`}</p>
+                <p className="text-xs text-darker">{`${extensionCount} files`}</p>
+            </div>
         </motion.div>
     );
 };

@@ -28,10 +28,10 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                 duration: 0.2,
             }}
             ref={setNodeRef}
-            className="border-2 border-base-100-50 border-dotted p-5 grid grid-rows-[min-content_auto_auto] gap-2 shadow-sm min-h-0">
+            className="border-2 border-base-100-50 border-dotted p-4 grid grid-rows-[min-content_min-content_auto] gap-2 shadow-sm min-h-0">
             <div className="flex justify-between items-center">
                 <p className="text-left">{groupName}</p>
-                <button onClick={onDelete} className="btn btn-ghost btn-error">
+                <button onClick={onDelete} className="btn btn-ghost btn-error h-4">
                     <Trash2 size={16} className="text-darker" />
                 </button>
             </div>
@@ -52,7 +52,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                     }}
                 >
                     <p className="text-left text-xs text-darker">Extensions: </p>
-                    <div className="flex justify-start gap-2 flex-wrap items-center p-2">
+                    <div className="flex justify-start gap-2 flex-wrap items-center">
                         {extensions.map(extension =>
                             <motion.div
                                 key={extension.id}
@@ -65,7 +65,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                                 }}>
 
                                 <div className="tooltip" data-tip={`${extension.count} files`}>
-                                    <div className="badge badge-soft badge-primary">.{extension.name}</div>
+                                    <div className="badge badge-soft badge-primary text-xs xl:text-sm">.{extension.name}</div>
                                     <motion.button
                                         onClick={() => {
                                             extensions.removeExtensionByID(extension.id);
@@ -83,13 +83,13 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                             </motion.div>)}
                     </div>
                 </motion.div>
-                : null}
+                : <div className="-What is my purpose? -To take grid space. -Oh god."></div>}
             {files.getFilesCount() > 0 ?
                 <div className="overflow-auto">
                     <p className="text-left text-xs text-darker">Files: </p>
                     <div className={`grid grid-cols-[repeat(auto-fit,_minmax(220px,_1fr))] gap-2`}>
                         {files.map(file =>
-                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-5">
+                            <div key={file.id} className="text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-2">
                                 {(() => {
                                     const fileExtension = "." + file.name.split(".")[file.name.split(".").length - 1];
                                     const IconComponent = getIconByExtension(fileExtension);
