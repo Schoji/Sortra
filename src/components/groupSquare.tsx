@@ -5,6 +5,7 @@ import { Files } from "../models/filesModel";
 import { formatBytes } from "../functions/formatBytes";
 import { getIconByExtension } from "../functions/getIcon";
 import { motion } from "motion/react";
+import { useState } from "react";
 
 
 type groupSquareProps = {
@@ -15,12 +16,18 @@ type groupSquareProps = {
     onDelete: () => void,
     onExtensionRemove: (extensionId: number) => void;
     onFileRemove: (fileId: number) => void;
+    onGroupNameChange: (event: any, previousName: string, id: number) => void;
 };
 
-const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRemove, onFileRemove }: groupSquareProps) => {
+const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRemove, onFileRemove, onGroupNameChange }: groupSquareProps) => {
+    const [inputField, setInputField] = useState(groupName);
+
+    const [previousName, setPreviousName] = useState(groupName);
+
     const { setNodeRef } = useDroppable({
         id: id
     });
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -31,13 +38,21 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
             ref={setNodeRef}
             className="border-2 border-base-100-50 border-dotted p-4 grid grid-rows-[min-content_min-content_auto] gap-2 shadow-sm min-h-0">
             <div className="flex justify-between items-center">
-                <p className="text-left">{groupName}</p>
-                <button onClick={onDelete} className="btn btn-ghost btn-error h-4">
+                <input
+                    className="text-left bg-transparent outline-none border-none focus:ring-0 p-0 m-0 w-full"
+                    pattern={"^(?!^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$)[^\\\\/:*?\"<>|.\\s][^\\\\/:*?\"<>|]{0,254}[^\\\\/:*?\"<>|.\\s]$"}
+                    required
+                    value={inputField}
+                    onChange={(e) => setInputField(e.target.value)}
+                    onBlur={(e) => onGroupNameChange(e, previousName, id)}
+                    onFocus={(e) => setPreviousName(e.target.value)}
+                />
+                <button onClick={onDelete} className="btn btn-ghost btn-error p-4">
                     <Trash2 size={16} className="text-darker" />
                 </button>
             </div>
             {extensions != null && files != null && extensions.getExtensionsCount() == 0 && files.getFilesCount() == 0 &&
-                <div className="flex flex-col items-center justify-center gap-2">
+                <div className="flex flex-col items-center justify-center gap-2 row-span-6">
                     <div className="border-2 border-base-100-50 rounded-full p-1 flex items-center justify-center">
                         <Plus className="text-success" />
                     </div>

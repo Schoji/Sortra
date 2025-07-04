@@ -1,9 +1,10 @@
-import { CircleCheckBig, File, Folder, Terminal } from "lucide-react";
+import { ChevronLeft, CircleCheckBig, File, Folder, SortAsc, Terminal } from "lucide-react";
 import { Groups } from "../models/groupsModel";
 import { Files } from "../models/filesModel";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { listen } from '@tauri-apps/api/event';
+import { motion } from "motion/react";
 type modalProps = {
     groupList: Groups;
     files: Files;
@@ -155,9 +156,18 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                     <div className="modal-action">
                         <form method="dialog">
                             {/* if there is a button in form, it will close the modal */}
-                            <button className="btn btn-outline">Cancel</button>
+                            <motion.button
+                                className="btn btn-outline border-base-100-50"
+                                whileHover={{ scale: 1.05 }}
+                            >
+                                <ChevronLeft className="text-darker" size={16} />
+                                Cancel
+                            </motion.button>
                         </form>
-                        <button className="btn btn-primary" onClick={sort}>Sort files</button>
+                        <motion.button className="btn btn-primary" whileHover={{ scale: 1.05 }} onClick={sort}>
+                            Sort files
+                            <SortAsc size={16} />
+                        </motion.button>
                     </div>
                 </div>
                 :
