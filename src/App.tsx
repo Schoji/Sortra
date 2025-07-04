@@ -316,7 +316,7 @@ export default function App() {
         <div className="h-[calc(100vh-64px)] p-4 grid grid-cols-1 sm:grid-cols-[minmax(200px,_320px),_1fr] gap-4 overflow-y-auto">
           <div className="grid grid-rows-[min-content_minmax(160px,_220px)] sm:grid-rows-[1fr_min-content] gap-4 min-h-0 max-sm:min-h-[325px]">
             {/* Invidual Files */}
-            <motion.div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-5 flex flex-col gap-2 shadow-sm min-h-0"
+            <motion.div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 flex flex-col gap-2 shadow-sm min-h-0"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
@@ -365,7 +365,7 @@ export default function App() {
           </div>
           <div className="grid max-sm:grid-rows-[225px_1fr_min-content] grid-rows-[205px_1fr_min-content] gap-4 min-h-0">
             {/* Extensions */}
-            <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-5 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[200px]">
+            <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
               <div className="flex justify-between">
                 <h1 className="text-xl font-semibold">File extensions</h1>
                 <button
@@ -388,9 +388,9 @@ export default function App() {
                   <input value={invidualExtensionText} onChange={searchInvidualExtension} type="search" className="grow p-2" placeholder="Search" />
                 </motion.label>
                 :
-                <p className="text-darker">Drag extensions to groups to sort files automatically</p>
+                <p className="text-darker text-nowrap">Drag extensions to groups to sort files automatically</p>
               }
-              <div className={`grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] overflow-x-hidden gap-4 snap-y snap-mandatory min-h-[90px] ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
+              <div className={`h-[90px] grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2 snap-y snap-mandatory ${isDragging ? "overflow-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
                 {extensions && extensions.map((extension) =>
                   <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
                 )}
@@ -444,7 +444,7 @@ export default function App() {
                   </motion.button>
                 </div>
               </div>
-              <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))] gap-4 min-h-0 h-full">
+              <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))] gap-3 min-h-0 h-full">
                 {groups.length > 0 ? groups.map(group =>
                   <GroupSquare
                     key={group.id}
@@ -457,13 +457,13 @@ export default function App() {
                     files={group.files ?? new Files()} />)
                   :
                   // No groups
-                  <div className="col-span-2 border-2 border-base-100-50 border-dotted p-5">
-                    <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="col-span-2 border-2 border-base-100-50 border-dotted p-4">
+                    <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="border-2 border-base-100-50 rounded-full p-2 flex items-center justify-center">
                         <Folder className="text-success" />
                       </div>
-                      <span className="text-center text-sm font-semibold">No groups yet</span>
-                      <span className="text-center text-darker text-xs w-1/2">Create your first group to start organizing your files. Drag file extensions to groups to sort them automatically.</span>
+                      <span className="text-sm font-semibold">No groups yet</span>
+                      <span className="text-center text-darker text-xs w-3/4">Create your first group to start organizing your files.<br/>Drag file extensions to groups to sort them automatically.</span>
                     </div>
                   </div>}
               </div>
@@ -489,37 +489,39 @@ export default function App() {
         }}>
           {/* Ghost Extension */}
           {activeId && activeId.split("-")[0] == "extension" ? (
-            <div className="p-5 bg-base-100 rounded-xl flex flex-col items-center justify-center gap-2 opacity-80 shadow-lg pointer-events-none">
-              <GripVertical size={12} className="text-darker" />
-              {(() => {
+            <div className="h-[90px] p-3 bg-base-100 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-2 opacity-80 shadow-lg pointer-events-none">
+              <GripVertical size={16} className="text-darker" />
+              <div className="flex flex-col items-center gap-1">
+                {(() => {
                 const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
                 const fileExtension = "." + extension?.name.split(".")[extension?.name.split(".").length - 1];
                 const IconComponent = getIconByExtension(fileExtension);
                 return <IconComponent className="text-accent" size={12} />;
-              })()}
-              <p className="text-sm">
-                {(() => {
-                  const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
-                  return `.${extension?.name}`;
                 })()}
-              </p>
-              <p className="text-xs text-darker">{(() => {
-                const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
-                return `${extension?.count} files`;
-              })()}</p>
+                <p className="text-sm">
+                  {(() => {
+                    const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                    return `.${extension?.name}`;
+                  })()}
+                </p>
+                <p className="text-xs text-darker">{(() => {
+                  const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                  return `${extension?.count} files`;
+                })()}</p>
+                </div>
             </div>
             // Ghost File
           ) : activeId && activeId.split("-")[0] == "file" ? (
-            <div className="text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-10 items-center gap-5">
-              <GripVertical size={16} className="text-darker col-span-1" />
+            <div className="shadow-lg text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1">
+              <GripVertical size={16} className="text-darker" />
               {(() => {
                 const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));
                 const fileExtension = "." + file?.name.split(".")[file?.name.split(".").length - 1];
                 const IconComponent = getIconByExtension(fileExtension);
-                return <IconComponent className="text-accent col-span-2" />;
+                return <IconComponent className="text-accent" />;
               })()}
-              <div className="flex flex-col col-span-7">
-                <p className="line-clamp-2 break-all text-sm max-w-[180px]">
+              <div className="flex flex-col">
+                <p className="line-clamp-2 break-all text-sm">
                   {`${fileList.current.getFileByID(Number(activeId.replace("file-", "")))?.name}`}
                 </p>
                 <p className="text-darker text-xs">

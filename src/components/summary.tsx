@@ -10,7 +10,7 @@ type summaryProps = {
 
 const Summary = ({ filesLength, extensionsLength, groupsLength, totalSize, mostCountedExtension }: summaryProps) => {
     return (
-        <div className="border-2 border-base-100-50 p-5 rounded-xl text-left">
+        <div className="border-2 border-base-100-50 p-4 rounded-xl text-left">
             <h1 className="text-xl font-semibold">Summary</h1>
             <div className="pt-3 grid grid-cols-2 gap-y-1">
                 <p className="text-sm text-darker">Files: </p>
