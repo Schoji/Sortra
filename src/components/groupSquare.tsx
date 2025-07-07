@@ -36,7 +36,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                 duration: 0.2,
             }}
             ref={setNodeRef}
-            className="border-2 border-base-100-50 border-dotted p-4 grid grid-rows-[min-content_min-content_auto] gap-2 shadow-sm min-h-0">
+            className="border-2 border-base-100-50 border-dotted p-4 grid grid-rows-[min-content_min-content_auto] gap-2 shadow-sm min-h-60">
             <div className="flex justify-between items-center">
                 <input
                     className="text-left bg-transparent outline-none border-none focus:ring-0 p-0 m-0 w-full"
@@ -68,7 +68,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                     }}
                 >
                     <p className="text-left text-xs text-darker">Extensions: </p>
-                    <div className="flex justify-start gap-2 flex-wrap items-center">
+                    <div className="flex justify-start gap-2 flex-wrap items-center pt-2">
                         {extensions.map(extension =>
                             <motion.div
                                 key={extension.id}
@@ -103,7 +103,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
             {files.getFilesCount() > 0 ?
                 <div className="overflow-auto">
                     <p className="text-left text-xs text-darker">Files: </p>
-                    <div className={`grid grid-cols-[repeat(auto-fit,_minmax(220px,_1fr))] gap-2`}>
+                    <div className={`grid grid-cols-[repeat(auto-fit,_minmax(220px,_1fr))] gap-2 pt-2`}>
                         {files.map(file =>
                             <div key={file.id} className="group relative text-left bg-base-100 p-2 grid grid-cols-[min-content_1fr] items-center gap-2">
                                 {(() => {

@@ -284,7 +284,13 @@ export default function App() {
         }}
       >
         {/* <div className="grid max-sm:grid-rows-[225px_1fr_min-content] grid-rows-[205px_1fr_min-content] gap-4 min-h-0"> */}
-        <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto overflow-x-hidden">
+        {/* <ul className="steps steps-horizontal">
+          <li className="step step-primary">Choose directory</li>
+          <li className="step step-primary">Add a group</li>
+          <li className="step">Choose extensions / files</li>
+          <li className="step">Sort</li>
+        </ul> */}
+        <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-[1fr,_2fr] gap-4 overflow-y-auto overflow-x-hidden">
           {/* Switch : Files - True, Extensions - False*/}
           <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
             <div className="flex justify-between items-center">
@@ -366,9 +372,9 @@ export default function App() {
               {/* Extensions */}
               <div
                 style={{ display: !filesShown ? "block" : "none" }}
-                className={`absolute inset-0 ${!filesShown ? "z-10" : "z-0"}`}
+                className={`absolute inset-0 overflow-scroll overflow-x-hidden ${!filesShown ? "z-10" : "z-0"}`}
               >
-                <div className={`h-[90px] grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2 snap-y snap-mandatory ${isDragging ? "overflow-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
+                <div className={` grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2 snap-y snap-mandatory ${isDragging ? "overflow-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
                   {extensions && extensions.map((extension) =>
                     <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
                   )}
@@ -419,7 +425,7 @@ export default function App() {
                 Add group
               </motion.button>
             </div>
-            <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))] gap-3 min-h-0 h-full">
+            <div ref={setNodeRef} className={`grid ${groups.length > 4 ? "overflow-y-scroll" : "grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))]"} gap-3 min-h-0 h-full`}>
               {groups.length > 0 ? groups.map(group =>
                 <GroupSquare
                   key={group.id}

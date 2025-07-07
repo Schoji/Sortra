@@ -1,10 +1,11 @@
-import { ChevronLeft, CircleCheckBig, File, Folder, SortAsc, Terminal } from "lucide-react";
+import { ChevronLeft, CircleCheckBig, Folder, SortAsc, Terminal } from "lucide-react";
 import { Groups } from "../models/groupsModel";
 import { Files } from "../models/filesModel";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { listen } from '@tauri-apps/api/event';
 import { motion } from "motion/react";
+import { getIconByExtension } from "../functions/getIcon";
 type modalProps = {
     groupList: Groups;
     files: Files;
@@ -128,7 +129,11 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                 {group.extensions && group.extensions.map(extension =>
                                     <div className="p-4 flex justify-between items-center bg-base-100 rounded-md" key={extension.id}>
                                         <div className="flex gap-2 items-center">
-                                            <File size={16} className="text-accent" />
+                                            {(() => {
+                                                const fileExtension = "." + extension.name;
+                                                const IconComponent = getIconByExtension(fileExtension);
+                                                return <IconComponent size={16} className="text-accent" />;
+                                            })()}
                                             <p className="text-xs">.{extension.name}</p>
                                             <p className="text-xs">-{">"}</p>
                                             <p className="text-xs text-darker">/{group.name}/</p>
@@ -137,11 +142,15 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                     </div>
                                 )}
                                 {group.files && <p className="text-xs text-darker">Files to move</p>}
-                                <div className="overflow-scroll overflow-x-hidden overflow-y-auto h-24 grid gap-2">
+                                <div className="overflow-scroll overflow-x-hidden overflow-y-auto grid gap-2">
                                     {group.files && group.files.map(file =>
                                         <div className="p-4 flex justify-between items-center bg-base-100 rounded-md" key={file.id}>
                                             <div className="flex gap-2 items-center">
-                                                <File size={16} className="text-accent" />
+                                                {(() => {
+                                                    const fileExtension = "." + file.name.split(".")[file.name.split(".").length - 1];
+                                                    const IconComponent = getIconByExtension(fileExtension);
+                                                    return <IconComponent size={16} className="text-accent" />;
+                                                })()}
                                                 <div className="">
                                                     <p className="text-xs">{file.name}</p>
                                                     <p className="text-xs text-darker">{(file.size / (1024)).toFixed(1)} MB</p>
@@ -192,7 +201,6 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                             }
                         </p>
                         <progress className="progress progress-primary w-full" value={progress.value.toString()} max={progress.max.toString()}></progress>
-                        <button onClick={() => setStage(0)}>XD</button>
                         <div className="bg-base-200 p-2 grid gap-2">
                             <div className="flex gap-2 items-center">
                                 <Terminal size={20} />
@@ -214,12 +222,24 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                     </div>
                     <div className="modal-action">
                         <form method="dialog">
-                            <button className="btn btn-primary btn-wide">Finish</button>
+                            <button
+                                className="btn btn-primary btn-wide"
+                                onClick={() => {
+                                    setTimeout(() => {
+                                        setStage(0);
+                                        setProgress(initialProgress);
+                                        setSortLog([]);
+                                    }, 500);
+                                }}
+                            >
+                                Finish
+                            </button>
                         </form>
                     </div>
                 </div>}
         </dialog>
     );
+
 };
 
 export default Modal;
