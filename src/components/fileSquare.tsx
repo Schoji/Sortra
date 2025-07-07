@@ -43,7 +43,7 @@ const FileSquare = ({ id, order, fileName, fileSize, isDragging }: FileSquarePro
                 transition: { type: "spring", stiffness: 300 },
             }}
             whileTap={{ scale: 0.98 }}>
-            <div className={`shadow-sm text-left bg-base-100 hover:bg-base-100-50 cursor-grab p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1 ${isDragging ? "opacity-0" : "opacity-100"}`}
+            <div className={`rounded-md shadow-sm text-left bg-base-100 hover:bg-base-100-50 cursor-grab p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1 ${isDragging ? "opacity-0" : "opacity-100"}`}
                 style={{ position: "relative", ...style }}
                 ref={setNodeRef}
                 {...listeners}

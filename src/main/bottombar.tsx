@@ -32,11 +32,11 @@ const BottomBar = ({ files, extensions, groups, totalSize, mostCommonExtension, 
                     <span className='text-primary'>{groups}</span>
 
                 </div>
-                <div className="text-sm invisible md:visible">
+                <div className="text-sm hidden md:block">
                     <span className='text-darker'>Common: </span>
                     <span className='text-primary'>{`${mostCommonExtension} (${mostCommonNumber})`}</span>
                 </div>
-                <div className="text-sm invisible md:visible">
+                <div className="text-sm hidden md:block">
                     <span className='text-darker'> Total size: </span>
                     <span className='text-primary'>{formatBytes(totalSize)}</span>
                 </div>

@@ -73,6 +73,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
             });
         }
         );
+        console.log(result);
         setStage(1);
         const result1 = await invoke<string[]>('sort', { json: result, dir: directory });
         console.log(result1);
@@ -181,7 +182,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                 </div>
                 :
                 <div className="modal-box grid gap-5 bg-base-300 border-2 border-base-100-50">
-                    <div className="grid gap-1">
+                    <div className="grid gap-2">
                         {progress.value != progress.max ?
                             <div className="flex gap-2 items-center">
                                 <span className="loading loading-spinner text-primary"></span>
@@ -206,7 +207,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
                                 <Terminal size={20} />
                                 <h1 className="font-bold text-sm">Terminal logs</h1>
                             </div>
-                            <div className="bg-base-100 text-xs p-2 overflow-scroll overflow-y-auto overflow-x-hidden h-52">
+                            <div className="bg-base-200 text-xs p-2 overflow-scroll overflow-y-auto overflow-x-hidden h-52">
                                 {sortLog && sortLog.map(line =>
                                     <p key={line}>
                                         <span className="text-zinc-500">{line.split(",")[0]}{" "}</span>

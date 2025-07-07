@@ -34,7 +34,6 @@ export default function App() {
   const [invidualFilesSearchText, setInvidualFilesSearchText] = useState("");
   const [invidualExtensionSearchFieldVisibility, setExtensionFilesSearchFieldVisibility] = useState(false);
   const [invidualExtensionText, setInvidualExtensionSearchText] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // fae - Files and Extensions
@@ -181,7 +180,6 @@ export default function App() {
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    setIsDragging(false);
     const { active, over } = event;
 
     if (!over || !active) return;
@@ -274,22 +272,13 @@ export default function App() {
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          setIsDragging(true);
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          setIsDragging(false);
           setActiveId(null);
           handleDragEnd(e);
         }}
       >
-        {/* <div className="grid max-sm:grid-rows-[225px_1fr_min-content] grid-rows-[205px_1fr_min-content] gap-4 min-h-0"> */}
-        {/* <ul className="steps steps-horizontal">
-          <li className="step step-primary">Choose directory</li>
-          <li className="step step-primary">Add a group</li>
-          <li className="step">Choose extensions / files</li>
-          <li className="step">Sort</li>
-        </ul> */}
         <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-[1fr,_2fr] gap-4 overflow-y-auto overflow-x-hidden">
           {/* Switch : Files - True, Extensions - False*/}
           <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
@@ -374,7 +363,7 @@ export default function App() {
                 style={{ display: !filesShown ? "block" : "none" }}
                 className={`absolute inset-0 overflow-scroll overflow-x-hidden ${!filesShown ? "z-10" : "z-0"}`}
               >
-                <div className={` grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2 snap-y snap-mandatory ${isDragging ? "overflow-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
+                <div className={`grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2`}>
                   {extensions && extensions.map((extension) =>
                     <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
                   )}
@@ -385,7 +374,7 @@ export default function App() {
                 style={{ display: filesShown ? "block" : "none" }}
                 className={`overflow-scroll overflow-y-auto overflow-x-hidden absolute inset-0 ${filesShown ? "z-10" : "z-0"}`}
               >
-                <div className={`grid gap-2 ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden"}`}>
+                <div className={`grid gap-2 grid-cols-1`}>
                   {files && files.map((file, idx) => (
                     <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
                   ))}
