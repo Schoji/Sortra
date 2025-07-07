@@ -421,8 +421,18 @@ export default function App() {
                   id={group.id}
                   groupName={group.name}
                   onDelete={() => deleteGroup(group.id)}
-                  onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
-                  onFileRemove={() => setGroups([...groupList.current.getGroupList()])}
+                  onExtensionRemove={(removedExtension) => {
+                    extensionList.current.addExtension(removedExtension);
+                    extensionList.current.sort();
+                    setExtensions([...extensionList.current.getExtensionList()]);
+                    setGroups([...groupList.current.getGroupList()]);
+                  }}
+                  onFileRemove={(removedFile) => {
+                    fileList.current.addFile(removedFile);
+                    fileList.current.sort();
+                    setFiles([...fileList.current.getFileList()]);
+                    setGroups([...groupList.current.getGroupList()]);
+                  }}
                   extensions={group.extensions ?? new Extensions()}
                   files={group.files ?? new Files()}
                   onGroupNameChange={onGroupNameChange}

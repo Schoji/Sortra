@@ -47,11 +47,15 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
             <GripVertical size={16} className="text-darker" />
             <div className="flex flex-col items-center gap-1">
                 {(() => {
-                const fileExtension = "." + extensionName.split(".")[extensionName.split(".").length - 1];
-                const IconComponent = getIconByExtension(fileExtension);
-                return <IconComponent className="text-accent" size={12} />;
+                    const fileExtension = "." + extensionName.split(".")[extensionName.split(".").length - 1];
+                    const IconComponent = getIconByExtension(fileExtension);
+                    return <IconComponent className="text-accent" size={12} />;
                 })()}
-                <p className="text-sm">{`.${extensionName}`}</p>
+                <p className="text-sm">
+                    {extensionName.length > 7
+                        ? `.${extensionName.slice(0, 6)}...`
+                        : `.${extensionName}`}
+                </p>
                 <p className="text-xs text-darker">{`${extensionCount} files`}</p>
             </div>
         </motion.div>

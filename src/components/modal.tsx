@@ -81,7 +81,7 @@ const Modal = ({ groupList, files, directory }: modalProps) => {
     return (
         <dialog id="my_modal_1" className="modal">
             {stage == 0 ?
-                <div className="modal-box grid gap-5 bg-base-200 border-2 border-base-100-50 max-w-none w-2/3">
+                <div className="modal-box max-h-[95vh] grid gap-5 bg-base-200 border-2 border-base-100-50 max-w-none w-2/3">
                     <div className="grid gap-1">
                         <div className="flex gap-2 items-center">
                             <Folder size={20} className="text-primary" />
