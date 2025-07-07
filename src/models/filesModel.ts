@@ -54,7 +54,7 @@ export class Files {
     }
     public getFilesByExtension(extension: string) {
         const filesWithThatExtension = this.FileList.filter(file => {
-            const slices = file.name.split(".");
+            const slices = file.name.toLowerCase().split(".");
             return slices[slices.length - 1] == extension;
         });
         return filesWithThatExtension;

@@ -11,10 +11,7 @@ export class Groups {
     }
 
     public getGroupByID(id: number): Group | null {
-        if (this.GroupList.length == 0) return null;
-
-        const Group = this.GroupList.find(f => f.id === id);
-        return Group ?? null;
+        return this.GroupList.find(g => g.id === id) ?? null;
     }
 
     public getGroupList(): Array<Group> {
@@ -30,8 +27,7 @@ export class Groups {
     }
 
     public groupExistsByName(groupName: string) {
-        const result = this.GroupList.findIndex(f => f.name === groupName);
-        return result == -1 ? false : true;
+        return this.GroupList.some(g => g.name === groupName);
     }
     public deleteGroupByID(id: number) {
         this.GroupList = this.GroupList.filter(group => group.id !== id);
@@ -40,18 +36,15 @@ export class Groups {
         this.GroupList = [];
     }
     public empty() {
-        let counter = 0;
-        this.GroupList.forEach(group => {
-            if (group.extensions != null || group.files != null) {
-                if ((group.extensions && group.extensions.getExtensionsCount() > 0) || (group.files && group.files.getFilesCount() > 0)) {
-                    counter++;
-                }
-            }
-        });
-        return counter < 1;
+        return !this.GroupList.some(group =>
+            (group.extensions?.getExtensionsCount() ?? 0) > 0 ||
+            (group.files?.getFilesCount() ?? 0) > 0
+        );
     }
     public clearItems() {
-        this.GroupList.forEach(group => group.extensions?.clear());
-        this.GroupList.forEach(group => group.files?.clear());
+        this.GroupList.forEach(group => {
+            group.extensions?.clear();
+            group.files?.clear();
+        });
     }
 }

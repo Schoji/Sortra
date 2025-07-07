@@ -98,18 +98,28 @@ fn sort(app: AppHandle, json: serde_json::Map<String, Value>, dir: &Path) -> Res
         };
         for file in files {
             update_progress(app.clone(), counter, total_files);
-            counter+= 1;
+            counter += 1;
             send_message(app.clone(), MessageTypes::INFO, format!("Moving {} to /{}", file, _key).as_str());
             let location: String = format!("{}/{}", _key, file);
-            match std::fs::copy(&file, location) {
-                Ok(_) => send_message(app.clone(), MessageTypes::SUCCESS, format!("Moved: {} → /{}/", file, _key).as_str()),
-                Err(e) => {
-                    send_message(app.clone(), MessageTypes::ERROR, format!("Error: {}", e.to_string()).as_str());
-                }
+
+            // Check if file exists before copying
+            if !Path::new(&file).exists() {
+                send_message(app.clone(), MessageTypes::ERROR, format!("File does not exist: {}", file).as_str());
+                continue;
             }
-            match std::fs::remove_file(&file) {
-                Ok(_) => send_message(app.clone(), MessageTypes::SUCCESS, format!("Removing: {}", file).as_str()),
-                Err(e) => send_message(app.clone(), MessageTypes::ERROR, format!("Error: {}", e.to_string()).as_str())
+
+            match std::fs::copy(&file, &location) {
+                Ok(_) => {
+                    send_message(app.clone(), MessageTypes::SUCCESS, format!("Moved: {} → /{}/", file, _key).as_str());
+                    // Only remove if copy succeeded
+                    match std::fs::remove_file(&file) {
+                        Ok(_) => send_message(app.clone(), MessageTypes::SUCCESS, format!("Removed: {}", file).as_str()),
+                        Err(e) => send_message(app.clone(), MessageTypes::ERROR, format!("Error removing file: {}", e.to_string()).as_str())
+                    }
+                },
+                Err(e) => {
+                    send_message(app.clone(), MessageTypes::ERROR, format!("Error copying file: {}", e.to_string()).as_str());
+                }
             }
         }
         send_message(app.clone(), MessageTypes::SUCCESS, format!("Processed group: {}", _key).as_str());

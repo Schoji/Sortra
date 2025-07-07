@@ -15,8 +15,8 @@
         "title": "Sortra",
         "width": 1024,
         "height": 830,
-        "minHeight": 240,
-        "minWidth": 320
+        "minHeight": 630,
+        "minWidth": 630
       }
     ],
     "security": {

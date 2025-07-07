@@ -36,7 +36,7 @@ const ExtensionSquare = ({ id, extensionName, extensionCount, isDragging }: exte
                 transition: { type: "spring", stiffness: 300 },
             }}
             whileTap={{ scale: 0.98 }}
-            className={`h-[90px] shadow-sm cursor-grab p-3 bg-base-100 hover:bg-base-100-50 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-1 snap-center snap-always ${isDragging ? "opacity-0" : "opacity-100"}`}
+            className={`h-[90px] shadow-sm cursor-grab p-3 bg-base-100 hover:bg-base-100-50 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-1 ${isDragging ? "opacity-0" : "opacity-100"}`}
             key={id}
             style={{ position: "relative", ...style }}
             ref={setNodeRef}

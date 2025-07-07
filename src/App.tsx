@@ -1,10 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowRight, Folder, FolderOpen, GripVertical, Search } from "lucide-react";
+import { Folder, GripVertical, Plus, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import FileSquare from "./components/fileSquare";
 import ExtensionSquare from "./components/extensionSquare";
-import Summary from "./components/summary";
 import GroupSquare from "./components/groupSquare";
 import { DndContext, DragEndEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import { Group } from "./models/groupModel";
@@ -17,6 +16,8 @@ import Modal from "./components/modal";
 import { motion } from "motion/react";
 import { formatBytes } from "./functions/formatBytes";
 import { getIconByExtension } from "./functions/getIcon";
+import TopBar from "./main/topbar";
+import BottomBar from "./main/bottombar";
 
 export default function App() {
   const groupList = useRef(new Groups);
@@ -29,13 +30,14 @@ export default function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupInputText, setGroupInputText] = useState("");
   const [invidualFilesSearchFieldVisibility, setInvidualFilesSearchFieldVisibility] = useState(false);
   const [invidualFilesSearchText, setInvidualFilesSearchText] = useState("");
   const [invidualExtensionSearchFieldVisibility, setExtensionFilesSearchFieldVisibility] = useState(false);
   const [invidualExtensionText, setInvidualExtensionSearchText] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  // fae - Files and Extensions
+  const [filesShown, setfilesShown] = useState(false);
 
   const { setNodeRef } = useDroppable({
     id: "0"
@@ -86,13 +88,7 @@ export default function App() {
   }
 
   function addNewGroup() {
-    const newGroupName = groupInputText;
-
-    // Sprawdź czy nazwa grupy nie jest za długa
-    if (newGroupName.length > 15 || newGroupName.length == 0) return;
-
-    // Sprawdź czy nie ma grupy o takiej samej nazwie
-    if (groupList.current.groupExistsByName(newGroupName)) return;
+    const newGroupName = "Group " + String(groupList.current.getLastID() + 1);
 
     // Stwórz nową grupę i dodaj ją do listy grup
     const newGroup = new Group(
@@ -102,10 +98,8 @@ export default function App() {
       null
     );
     groupList.current.addGroup(newGroup);
-    setGroups(groupList.current.getGroupList());
-
-    // Wyczyść input
-    setGroupInputText("");
+    // Force a new array reference to trigger re-render
+    setGroups([...groupList.current.getGroupList()]);
   }
 
   function deleteGroup(id: number) {
@@ -186,7 +180,6 @@ export default function App() {
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    setIsDragging(false);
     const { active, over } = event;
 
     if (!over || !active) return;
@@ -251,252 +244,238 @@ export default function App() {
       throw ("error");
     }
   }
+
+  function onGroupNameChange(e: React.FocusEvent<HTMLInputElement>, previousName: string, id: number) {
+    const newGroupName = e.target.value;
+    if (newGroupName.length > 15 || newGroupName.length == 0) {
+      e.target.value = previousName;
+      return;
+    }
+
+    if (groupList.current.groupExistsByName(newGroupName)) {
+      e.target.value = previousName;
+      return;
+    }
+    console.log("zmiana");
+    if (groupList.current.getGroupByID(id)) {
+      groupList.current.getGroupByID(id)!.name = newGroupName;
+      setGroups([...groupList.current.getGroupList()]);
+    }
+  }
   return (
-    <div className="bg-base-300 select-none flex flex-col">
-      {/* Navbar */}
-      <div className="navbar bg-base-200 shadow-sm border-b-2 border-base-100-50 fixed z-50">
-        <div className="navbar-start pl-5 gap-5 items-center">
-          <div className="flex gap-2 items-center">
-            <FolderOpen className="bg-primary p-1 rounded-md" />
-            <h1 className="text-xl font-semibold hidden md:block">Sortra</h1>
-          </div>
-          {directory != "" ?
-            <div className="flex items-center gap-2 text-sm invisible sm:visible">
-              <FolderOpen size={16} className="text-accent" />
-              {/* Directory */}
-              <p className="text-darker">{directory}</p>
-            </div>
-            : null}
-        </div>
-        <div className="navbar-center">
-        </div>
-        <div className="navbar-end">
-          <motion.button className="btn btn-primary"
-            onClick={getDirectory}
-            animate={directory == "" ? { scale: [1, 1.1] } : { scale: 1 }}
-            transition={
-              directory == ""
-                ? {
-                  duration: 0.8,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }
-                : { duration: 0.2 }
-            }
-            whileHover={{
-              scale: 1.1,
-              y: -2,
-              boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
-              rotate: 3
-            }}
-            whileTap={{
-              scale: 0.95,
-              rotate: 0
-            }}>
-            <FolderOpen size={20} />
-            Change Folder
-          </motion.button>
-        </div>
-      </div>
+    <div className="bg-base-300 select-none flex flex-col overflow-x-hidden">
+
+      <TopBar directory={directory} getDirectory={getDirectory} />
+      {/* Rekompensata za topbar */}
       <div className="h-16"></div>
+
       {/* main */}
       <DndContext
         onDragStart={(e) => {
-          setIsDragging(true);
           setActiveId(e.active.id as string);
         }}
         onDragEnd={(e) => {
-          setIsDragging(false);
-          console.log("dupsonnn");
           setActiveId(null);
           handleDragEnd(e);
         }}
       >
-        <div className="h-[calc(100vh-64px)] p-4 grid grid-cols-1 sm:grid-cols-[minmax(200px,_320px),_1fr] gap-4 overflow-y-auto">
-          <div className="grid grid-rows-[min-content_minmax(160px,_220px)] sm:grid-rows-[1fr_min-content] gap-4 min-h-0 max-sm:min-h-[325px]">
-            {/* Invidual Files */}
-            <motion.div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 flex flex-col gap-2 shadow-sm min-h-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-            >
-              <div className="flex justify-between items-center">
-                <h1 className="font-semibold text-xl">Individual Files</h1>
-                <button
-                  onClick={() => setInvidualFilesSearchFieldVisibility(!invidualFilesSearchFieldVisibility)}
-                  className="btn btn-ghost btn-xs btn-primary">
-                  <Search className="text-darker" size={16} />
-                </button>
-              </div>
-              {invidualFilesSearchFieldVisibility ?
-                <motion.label
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut"
+        <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-[minmax(250px,350px),_1fr] gap-4 overflow-hidden">
+          {/* Switch : Files - True, Extensions - False*/}
+          <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
+            <div className="flex justify-between items-center">
+              <div className="p-1 bg-base-100-50 grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
+                <input
+                  className={`btn ${!filesShown ? "btn-active btn-primary rounded-lg" : "bg-transparent border-0 shadow-none text-darker"}`}
+                  type="radio"
+                  name="options"
+                  aria-label="Extensions"
+                  checked={!filesShown}
+                  onChange={() => {
+                    setfilesShown(false);
+                    setExtensionFilesSearchFieldVisibility(false);
+                    setInvidualFilesSearchFieldVisibility(false);
                   }}
-                  className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
-                >
-                  <Search size={16} className="text-darker" />
-                  <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
-                </motion.label>
-                :
-                <p className="text-xs text-left text-darker">Drag files to override extensions rules</p>
-              }
-              {/* Files Ref*/}
-              <div className={`grid gap-2 ${isDragging ? "overflow-y-hidden overflow-x-hidden" : "overflow-x-hidden"}`}>
-              {files && files.map((file, idx) => (
-                <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
-              ))}
-              </div>
-            </motion.div>
-            {/* Summary */}
-            <div className="shadow-sm row-start-1 sm:row-start-2">
-              <Summary
-              filesLength={initialFileList.current.getFilesCount()}
-              extensionsLength={extensions!.length}
-              groupsLength={groups.length}
-              totalSize={getUnsortedFiles().reduce((acc, file) => acc + file.size, 0)}
-              mostCountedExtension={`.${extensionList.current.getExtensionWithMostCount()?.name ?? "ext"} (${extensionList.current.getExtensionWithMostCount()?.count ?? "0"})`}
-              />
-            </div>
-          </div>
-          <div className="grid max-sm:grid-rows-[225px_1fr_min-content] grid-rows-[205px_1fr_min-content] gap-4 min-h-0">
-            {/* Extensions */}
-            <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
-              <div className="flex justify-between">
-                <h1 className="text-xl font-semibold">File extensions</h1>
-                <button
-                  onClick={() => setExtensionFilesSearchFieldVisibility(!invidualExtensionSearchFieldVisibility)}
-                  className="btn btn-ghost btn-xs btn-primary">
-                  <Search className="text-darker" size={16} />
-                </button>
-              </div>
-              {invidualExtensionSearchFieldVisibility ?
-                <motion.label
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    ease: "easeOut"
+                />
+                <input
+                  className={`btn ${filesShown ? "btn-active btn-primary rounded-lg" : "bg-transparent border-0 shadow-none text-darker"}`}
+                  type="radio"
+                  name="options"
+                  aria-label="Files"
+                  checked={filesShown}
+                  onChange={() => {
+                    setfilesShown(true);
+                    setExtensionFilesSearchFieldVisibility(false);
+                    setInvidualFilesSearchFieldVisibility(false);
                   }}
-                  className="input w-full focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
-                >
-                  <Search size={16} className="text-darker" />
-                  <input value={invidualExtensionText} onChange={searchInvidualExtension} type="search" className="grow p-2" placeholder="Search" />
-                </motion.label>
-                :
-                <p className="text-darker text-nowrap">Drag extensions to groups to sort files automatically</p>
-              }
-              <div className={`h-[90px] grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2 snap-y snap-mandatory ${isDragging ? "overflow-hidden" : "overflow-x-hidden overflow-y-auto"}`}>
-                {extensions && extensions.map((extension) =>
-                  <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
-                )}
+                />
               </div>
-            </div>
-            {/* Groups */}
-            <div className="min-h-0 flex flex-col gap-4">
-              <div className="flex justify-between">
-                <h1 className="text-xl font-semibold invisible sm:visible">Groups</h1>
-                <div className="flex gap-2">
-                  {/* {Group Input} */}
-                  <input
-                    className="input focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
-                    placeholder="Group name"
-                    pattern={
-                      groupInputText !== ""
-                        ? "^(?!^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$)[^\\\\/:*?\"<>|.\\s][^\\\\/:*?\"<>|]{0,254}[^\\\\/:*?\"<>|.\\s]$"
-                        : undefined
-                    }
-                    value={groupInputText}
-                    onChange={(e) => setGroupInputText(e.target.value)}
-                  />
-                  <motion.button
-                    disabled={directory == "" ? true : false}
-                    className="btn btn-primary"
-                    onClick={addNewGroup}
-                    animate={directory != "" && groupList.current.getGroupsCount() == 0 ? { scale: [1, 1.1] } : { scale: 1 }}
-                    transition={
-                      directory != "" && groupList.current.getGroupsCount() == 0
-                        ? {
-                          duration: 0.8,
-                          repeat: Infinity,
-                          repeatType: "reverse",
-                          ease: "easeInOut",
-                        }
-                        : { duration: 0.2 }
+              <button
+                onClick={() => {
+                  if (filesShown) {
+                    setInvidualFilesSearchFieldVisibility(!invidualFilesSearchFieldVisibility);
 
-                    }
-                    whileHover={{
-                      scale: 1.1,
-                      y: -2,
-                      boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
-                      rotate: 3
-                    }}
-                    whileTap={{
-                      scale: 0.95,
-                      rotate: 0
-                    }}
-                  >
-                    +
-                  </motion.button>
+                  }
+                  else {
+                    setExtensionFilesSearchFieldVisibility(!invidualExtensionSearchFieldVisibility);
+                  }
+                }
+                }
+                className="btn btn-ghost btn-xs btn-primary">
+                <Search className="text-darker" size={16} />
+              </button>
+            </div>
+            {invidualExtensionSearchFieldVisibility && !filesShown ?
+              <motion.label
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
+                className="input input-sm w-full focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
+              >
+                <Search size={16} className="text-darker" />
+                <input value={invidualExtensionText} onChange={searchInvidualExtension} type="search" className="grow p-2" placeholder="Search" />
+              </motion.label>
+              :
+              !filesShown && <p className="text-xs text-left text-darker">Drag files to sort them by extensions</p>
+            }
+            {invidualFilesSearchFieldVisibility && filesShown ?
+              <motion.label
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: "easeOut"
+                }}
+                className="input input-sm w-full focus-within:border-1 focus-within:border-primary focus-within:ring-0 focus-within:outline-none"
+              >
+                <Search size={16} className="text-darker" />
+                <input value={invidualFilesSearchText} onChange={searchInvidualFile} type="search" className="grow p-2" placeholder="Search" />
+              </motion.label>
+              :
+              filesShown && <p className="text-xs text-left text-darker">Drag files to override extensions rules</p>
+            }
+            {/* Render both, but hide with CSS to keep them mounted */}
+            <div className="relative w-full h-full">
+              {/* Extensions */}
+              <div
+                style={{ display: !filesShown ? "block" : "none" }}
+                className={`absolute inset-0 overflow-y-auto overflow-x-hidden ${!filesShown ? "z-10" : "z-0"}`}
+              >
+                <div className={` grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-3 scroll-p-2`}>
+                  {extensions && extensions.map((extension) =>
+                    <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
+                  )}
                 </div>
               </div>
-              <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))] gap-3 min-h-0 h-full">
-                {groups.length > 0 ? groups.map(group =>
-                  <GroupSquare
-                    key={group.id}
-                    id={group.id}
-                    groupName={group.name}
-                    onDelete={() => deleteGroup(group.id)}
-                    onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
-                    onFileRemove={() => setGroups([...groupList.current.getGroupList()])}
-                    extensions={group.extensions ?? new Extensions()}
-                    files={group.files ?? new Files()} />)
-                  :
-                  // No groups
-                  <div className="col-span-2 border-2 border-base-100-50 border-dotted p-4">
-                    <div className="h-full flex flex-col items-center justify-center gap-2">
-                      <div className="border-2 border-base-100-50 rounded-full p-2 flex items-center justify-center">
-                        <Folder className="text-success" />
-                      </div>
-                      <span className="text-sm font-semibold">No groups yet</span>
-                      <span className="text-center text-darker text-xs w-3/4">Create your first group to start organizing your files.<br/>Drag file extensions to groups to sort them automatically.</span>
-                    </div>
-                  </div>}
+              {/* Files */}
+              <div
+                style={{ display: filesShown ? "block" : "none" }}
+                className={`overflow-y-auto overflow-x-hidden absolute inset-0 ${filesShown ? "z-10" : "z-0"}`}
+              >
+                <div className={`flex flex-col gap-2 overflow-hidden`}>
+                  {files && files.map((file, idx) => (
+                    <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
+                  ))}
+                </div>
               </div>
             </div>
-            {/* Actions */}
-            <div className="flex justify-end gap-5">
-              <button className="btn btn-outline" onClick={() => {
-                setGroups([]);
-                groupList.current.clearItems();
-              }}>Reset groups</button>
-              <button className="btn btn-primary" disabled={groupList.current.empty()} onClick={() => {
-                const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
-                if (modal) {
-                  modal.showModal();
+          </div>
+          {/* Groups */}
+          <div className="min-h-0 flex flex-col gap-4 min-w-[350px]">
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-semibold hidden sm:block">Groups</h1>
+              <motion.button
+                disabled={directory == "" ? true : false}
+                className="btn btn-primary w-full sm:w-auto"
+                onClick={addNewGroup}
+                animate={directory != "" && groupList.current.getGroupsCount() == 0 ? { scale: [1, 1.1] } : { scale: 1 }}
+                transition={
+                  directory != "" && groupList.current.getGroupsCount() == 0
+                    ? {
+                      duration: 0.6,
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                      ease: "easeInOut",
+                    }
+                    : { duration: 0.2 }
+
                 }
-              }}>Sort <ArrowRight size={16} /></button>
+                whileHover={{
+                  scale: 1.1,
+                  boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
+                }}
+                whileTap={{
+                  scale: 0.95,
+                }}
+              >
+                <Plus size={16} />
+                Add group
+              </motion.button>
+            </div>
+            <div ref={setNodeRef} className={`grid overflow-y-auto grid-cols-[repeat(auto-fit,_minmax(290px,_1fr))] gap-3 min-h-0 h-full`}>
+              {groups.length > 0 ? groups.map(group =>
+                <GroupSquare
+                  key={group.id}
+                  id={group.id}
+                  groupName={group.name}
+                  onDelete={() => deleteGroup(group.id)}
+                  onExtensionRemove={() => setGroups([...groupList.current.getGroupList()])}
+                  onFileRemove={() => setGroups([...groupList.current.getGroupList()])}
+                  extensions={group.extensions ?? new Extensions()}
+                  files={group.files ?? new Files()}
+                  onGroupNameChange={onGroupNameChange}
+                />)
+
+                :
+                // No groups
+                <div className="col-span-2 border-2 border-base-100-50 border-dotted p-4">
+                  <div className="h-full flex flex-col items-center justify-center gap-2">
+                    <div className="border-2 border-base-100-50 rounded-full p-2 flex items-center justify-center">
+                      <Folder className="text-success" />
+                    </div>
+                    <span className="text-sm font-semibold">No groups yet</span>
+                    <span className="text-center text-darker text-xs w-3/4">Create your first group to start organizing your files.<br />Drag file extensions to groups to sort them automatically.</span>
+                  </div>
+                </div>}
             </div>
           </div>
+          {/* Close grid container */}
         </div>
+        {/* BottomBar */}
+        <BottomBar
+          resetFunction={function (): void {
+            groupList.current.clear();
+            setGroups([]);
+          }}
+          sortFunction={function (): void {
+            const modal = document.getElementById('my_modal_1') as HTMLDialogElement | null;
+            if (modal) {
+              modal.showModal();
+            };
+          }}
+          sortDisabled={groupList.current.empty()}
+          files={initialFileList.current.getFilesCount()}
+          extensions={extensions!.length}
+          groups={groups.length}
+          totalSize={getUnsortedFiles().reduce((acc, file) => acc + file.size, 0)}
+          mostCommonExtension={extensionList.current.getExtensionWithMostCount()?.name ?? "ext"}
+          mostCommonNumber={extensionList.current.getExtensionWithMostCount()?.count ?? 0} />
         <DragOverlay dropAnimation={{
           duration: 500,
           easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
         }}>
           {/* Ghost Extension */}
           {activeId && activeId.split("-")[0] == "extension" ? (
-            <div className="h-[90px] p-3 bg-base-100 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-2 opacity-80 shadow-lg pointer-events-none">
+            <div className="h-[90px] p-3 bg-base-100 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-1 opacity-80 shadow-lg pointer-events-none">
               <GripVertical size={16} className="text-darker" />
               <div className="flex flex-col items-center gap-1">
                 {(() => {
-                const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
-                const fileExtension = "." + extension?.name.split(".")[extension?.name.split(".").length - 1];
-                const IconComponent = getIconByExtension(fileExtension);
-                return <IconComponent className="text-accent" size={12} />;
+                  const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
+                  const fileExtension = "." + extension?.name.split(".")[extension?.name.split(".").length - 1];
+                  const IconComponent = getIconByExtension(fileExtension);
+                  return <IconComponent className="text-accent" size={12} />;
                 })()}
                 <p className="text-sm">
                   {(() => {
@@ -508,11 +487,11 @@ export default function App() {
                   const extension = extensionList.current.getExtensionByID(Number(activeId.replace("extension-", "")));
                   return `${extension?.count} files`;
                 })()}</p>
-                </div>
+              </div>
             </div>
             // Ghost File
           ) : activeId && activeId.split("-")[0] == "file" ? (
-            <div className="shadow-lg text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1">
+            <div className="shadow-lg text-left bg-base-100 rounded-md hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1">
               <GripVertical size={16} className="text-darker" />
               {(() => {
                 const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));
