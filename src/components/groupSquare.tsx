@@ -6,6 +6,8 @@ import { formatBytes } from "../functions/formatBytes";
 import { getIconByExtension } from "../functions/getIcon";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { Extension } from "../models/extensionModel";
+import { File } from "../models/fileModel";
 
 
 type groupSquareProps = {
@@ -14,8 +16,8 @@ type groupSquareProps = {
     extensions: Extensions;
     files: Files;
     onDelete: () => void,
-    onExtensionRemove: (extensionId: number) => void;
-    onFileRemove: (fileId: number) => void;
+    onExtensionRemove: (extension: Extension) => void;
+    onFileRemove: (file: File) => void;
     onGroupNameChange: (event: any, previousName: string, id: number) => void;
 };
 
@@ -85,7 +87,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                                     <motion.button
                                         onClick={() => {
                                             extensions.removeExtensionByID(extension.id);
-                                            onExtensionRemove(extension.id);
+                                            onExtensionRemove(extension);
                                         }}
                                         whileHover={{ scale: 1.2, rotate: 90 }}
                                         initial={{ scale: 0, opacity: 0 }}
@@ -118,7 +120,7 @@ const GroupSquare = ({ id, groupName, extensions, files, onDelete, onExtensionRe
                                 <motion.button
                                     onClick={() => {
                                         files.removeFileByID(file.id);
-                                        onFileRemove(file.id);
+                                        onFileRemove(file);
                                     }}
                                     whileHover={{ scale: 1.2, rotate: 90 }}
                                     initial={{ scale: 0, opacity: 0 }}
