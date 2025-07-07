@@ -20,7 +20,9 @@ const TopBar = ({ directory, getDirectory }: TopBarProps) => {
                     <div className="flex items-center gap-2 text-sm invisible sm:visible bg-base-100 p-2 rounded-lg pl-10 pr-10">
                         <FolderOpen size={16} className="text-accent" />
                         {/* Directory */}
-                        <p className="text-darker">{directory}</p>
+                        <p className="text-darker" title={directory}>
+                            {directory.length > 40 ? `...${directory.slice(-37)}` : directory}
+                        </p>
                     </div>
                 }
             </div>

@@ -279,7 +279,7 @@ export default function App() {
           handleDragEnd(e);
         }}
       >
-        <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-[1fr,_2fr] gap-4 overflow-y-auto overflow-x-hidden">
+        <div className="h-[calc(100vh-145px)] p-4 grid grid-cols-1 sm:grid-cols-[minmax(250px,350px),_1fr] gap-4 overflow-hidden">
           {/* Switch : Files - True, Extensions - False*/}
           <div className="bg-base-200 rounded-xl border-2 border-base-100-50 p-4 text-left flex flex-col gap-2 shadow-sm max-sm:min-h-[225px] min-h-[205px]">
             <div className="flex justify-between items-center">
@@ -361,9 +361,9 @@ export default function App() {
               {/* Extensions */}
               <div
                 style={{ display: !filesShown ? "block" : "none" }}
-                className={`absolute inset-0 overflow-scroll overflow-x-hidden ${!filesShown ? "z-10" : "z-0"}`}
+                className={`absolute inset-0 overflow-y-auto overflow-x-hidden ${!filesShown ? "z-10" : "z-0"}`}
               >
-                <div className={`grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-4 scroll-p-2`}>
+                <div className={` grid grid-cols-[repeat(auto-fit,_minmax(90px,_1fr))] gap-3 scroll-p-2`}>
                   {extensions && extensions.map((extension) =>
                     <ExtensionSquare key={extension.id} id={extension.id} extensionName={extension.name} extensionCount={extension.count} isDragging={activeId === `extension-${extension.id}`} />
                   )}
@@ -372,9 +372,9 @@ export default function App() {
               {/* Files */}
               <div
                 style={{ display: filesShown ? "block" : "none" }}
-                className={`overflow-scroll overflow-y-auto overflow-x-hidden absolute inset-0 ${filesShown ? "z-10" : "z-0"}`}
+                className={`overflow-y-auto overflow-x-hidden absolute inset-0 ${filesShown ? "z-10" : "z-0"}`}
               >
-                <div className={`grid gap-2 grid-cols-1`}>
+                <div className={`flex flex-col gap-2 overflow-hidden`}>
                   {files && files.map((file, idx) => (
                     <FileSquare order={idx} id={file.id} fileName={file.name} key={file.id} fileSize={file.size} isDragging={activeId === `file-${file.id}`} />
                   ))}
@@ -383,7 +383,7 @@ export default function App() {
             </div>
           </div>
           {/* Groups */}
-          <div className="min-h-0 flex flex-col gap-4">
+          <div className="min-h-0 flex flex-col gap-4 min-w-[350px]">
             <div className="flex justify-between items-center">
               <h1 className="text-xl font-semibold hidden sm:block">Groups</h1>
               <motion.button
@@ -414,7 +414,7 @@ export default function App() {
                 Add group
               </motion.button>
             </div>
-            <div ref={setNodeRef} className={`grid ${groups.length > 4 ? "overflow-y-scroll" : "grid-cols-[repeat(auto-fit,_minmax(280px,_1fr))]"} gap-3 min-h-0 h-full`}>
+            <div ref={setNodeRef} className={`grid overflow-y-auto grid-cols-[repeat(auto-fit,_minmax(290px,_1fr))] gap-3 min-h-0 h-full`}>
               {groups.length > 0 ? groups.map(group =>
                 <GroupSquare
                   key={group.id}
@@ -468,7 +468,7 @@ export default function App() {
         }}>
           {/* Ghost Extension */}
           {activeId && activeId.split("-")[0] == "extension" ? (
-            <div className="h-[90px] p-3 bg-base-100 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-2 opacity-80 shadow-lg pointer-events-none">
+            <div className="h-[90px] p-3 bg-base-100 rounded-xl grid grid-cols-[min-content_1fr] items-center gap-1 opacity-80 shadow-lg pointer-events-none">
               <GripVertical size={16} className="text-darker" />
               <div className="flex flex-col items-center gap-1">
                 {(() => {
@@ -491,7 +491,7 @@ export default function App() {
             </div>
             // Ghost File
           ) : activeId && activeId.split("-")[0] == "file" ? (
-            <div className="shadow-lg text-left bg-base-100 hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1">
+            <div className="shadow-lg text-left bg-base-100 rounded-md hover:brightness-200 hover:cursor-move p-2 grid grid-cols-[min-content_min-content_1fr] items-center gap-1">
               <GripVertical size={16} className="text-darker" />
               {(() => {
                 const file = fileList.current.getFileByID(Number(activeId.replace("file-", "")));

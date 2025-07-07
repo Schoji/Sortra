@@ -17,7 +17,7 @@ type BottomBarProps = {
 const BottomBar = ({ files, extensions, groups, totalSize, mostCommonExtension, mostCommonNumber, resetFunction, sortFunction, sortDisabled }: BottomBarProps) => {
     return (
         <div className="p-5 grid sm:flex justify-center sm:justify-between items-center gap-5 bg-base-200">
-            <div className='flex gap-2 invisible sm:visible'>
+            <div className='gap-2 hidden sm:flex'>
                 <div className="text-sm">
                     <span className='text-darker'> Files: </span>
                     <span className='text-primary'>{files}</span>
